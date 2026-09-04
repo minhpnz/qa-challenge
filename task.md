@@ -155,22 +155,28 @@ artifact should read as if it will be adopted by a whole QA org.
 
 ### Verification status
 
-| Suite                                        | Result                                                                                | When          |
-| -------------------------------------------- | ------------------------------------------------------------------------------------- | ------------- |
-| API (19 tests)                               | ✅ 19/19 in 7.1s                                                                      | quiet machine |
-| UI Chromium (29 tests)                       | ✅ 29/29 in 1.0m                                                                      | quiet machine |
-| UI Firefox / WebKit                          | ⚠️ partial — see note                                                                 |               |
-| Lint + format + typecheck (`npm run verify`) | ✅ clean                                                                              | current       |
-| Workbook formulas (32)                       | ✅ no unknown sheets/functions/ranges; all 22 COUNTIF/COUNTA independently recomputed | current       |
+| Suite                                        | Result                                                                                     | Evidence                          |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------ | --------------------------------- |
+| API (19 tests)                               | ✅ 19/19 in 7.1s                                                                            | full run                          |
+| UI Chromium (29 tests)                       | ✅ 29/29 in 1.0m                                                                            | full run                          |
+| Performance (5 tests)                        | ✅ API-latency 2/2 consistently; page budgets 4/5 repeat runs (1 loss to an external SIGKILL) | full run + 5x repeat              |
+| UI Firefox / WebKit                          | ⚠️ configured, never a clean full pass on this machine                                      | see note                          |
+| CI workflow                                  | ⚠️ structurally validated, never executed — no GitHub remote yet                            | YAML parsed, jobs/matrix verified |
+| Lint + format + typecheck (`npm run verify`) | ✅ clean                                                                                     | current                           |
+| Workbook formulas (32)                       | ✅ no unknown sheets/functions/ranges; all 22 COUNTIF/COUNTA independently recomputed        | static validation                 |
 
-**Note on the last runs:** macOS XProtect (peaked ~489% CPU) and Avira (~285%) began
-scanning the freshly-installed Playwright browser binaries and `node_modules`, driving
-load average past 400. Under that, even the browserless API suite went from 7s to 10.8
-minutes with navigation timeouts — the machine, not the code. Three changes landed after
-the last clean browser run (cart specs restructured onto a `beforeEach` precondition hook,
-`video` default changed to `on-first-retry`, `loggedInUser` fixture simplified); they pass
-`npm run verify` but want one clean `npm run test:ci` once the scans finish. Excluding this
-directory from Avira would also help.
+**Note — the browser failures on this machine are external.** Playwright's
+`chrome-headless-shell` processes are being **SIGKILLed mid-run**, with
+`exception while trying to kill process: Error: kill EPERM` in the browser log.
+That is the Avira system extension (`com.avira.scanservice`), not the framework:
+the same one-line `page.goto` test passes 5/5 in one minute and then fails the
+next. macOS XProtect compounded it earlier, peaking near 489% CPU while scanning
+the newly installed browser binaries and `node_modules`. Full Chromium
+(`channel: 'chromium'`) is blocked outright — every launch returns `kill EPERM`.
+
+**To get a clean cross-browser run:** add this directory (and
+`~/Library/Caches/ms-playwright`) to the Avira exclusion list, then
+`npm run test:cross-browser`. CI is unaffected — GitHub runners have no such agent.
 
 ### Google Sheet
 
