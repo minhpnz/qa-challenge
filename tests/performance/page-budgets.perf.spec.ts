@@ -20,6 +20,15 @@ interface NavigationMetrics {
  *
  * Budgets are configuration (PERF_BUDGET_*), so a team can tighten them without
  * touching a spec, and CI can run looser budgets than a developer's laptop.
+ *
+ * Known caveat, recorded rather than hidden: this runs on Playwright's default
+ * `chrome-headless-shell`, a stripped-down rendering host whose paint and
+ * compositing behaviour differs from the browser a customer actually uses. That
+ * is acceptable for *relative* regression detection — the comparison is against
+ * yesterday's number on the same engine — but these figures should never be
+ * quoted as real-user performance. Switching to `channel: 'chromium'` buys
+ * realism at the cost of a second browser download in CI; worth doing when the
+ * numbers start informing decisions rather than just gating regressions.
  */
 test.describe('Performance budgets @performance', () => {
   const pages = [
