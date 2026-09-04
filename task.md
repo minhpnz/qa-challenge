@@ -60,13 +60,14 @@ scenarios gracefully** (stable waits, no hard sleeps, deterministic test data, c
 
 ## 3. Deliverables (What to Submit)
 
-| # | Deliverable | Format | Status |
-|---|---|---|---|
-| 1 | **Test Case Suite** — thorough test cases for Login + Cart modules | Excel / Google Sheet | ⏳ |
-| 2 | **Automation Framework + Demo Scripts** — working framework, scripts covering Login and Cart use cases | GitHub, **public repo**, link included in the email | ⏳ |
-| 3 | **Documentation** — README covering (a) framework structure & rationale, (b) steps to execute the demo scripts | `README.md` | ⏳ |
+| #   | Deliverable                                                                                                    | Format                                              | Status |
+| --- | -------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- | ------ |
+| 1   | **Test Case Suite** — thorough test cases for Login + Cart modules                                             | Excel / Google Sheet                                | ⏳     |
+| 2   | **Automation Framework + Demo Scripts** — working framework, scripts covering Login and Cart use cases         | GitHub, **public repo**, link included in the email | ⏳     |
+| 3   | **Documentation** — README covering (a) framework structure & rationale, (b) steps to execute the demo scripts | `README.md`                                         | ⏳     |
 
 Submission notes:
+
 - Repo **must be public**.
 - Repo link goes in the submission email.
 
@@ -107,16 +108,16 @@ artifact should read as if it will be adopted by a whole QA org.
 
 ### 4.3 What that implies for these deliverables
 
-| Signal they look for | How to show it here |
-|---|---|
-| Architecture, not scripts | Layered framework (config → fixtures → page objects → flows → specs), no logic in specs |
-| Scalability | Adding a new module must not require touching existing code |
-| Reliability ownership | Web-first assertions, zero `waitForTimeout`, retries policy, flaky quarantine strategy documented |
-| CI/CD ownership | Real GitHub Actions workflow: matrix browsers, sharding, artifact upload, report publishing |
-| Multi-test-type support | UI + API (auth/cart endpoints) + regression tagging + a perf smoke |
-| AI competency | Documented AI-assisted workflow: test generation, selector healing, failure triage — with guardrails |
-| Craftsmanship | Typed everything, lint + format + typecheck gates, small pure helpers, meaningful names |
-| Bar-raising / mentoring | README rationale section written as team standards + "why this, not that" trade-offs |
+| Signal they look for      | How to show it here                                                                                  |
+| ------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Architecture, not scripts | Layered framework (config → fixtures → page objects → flows → specs), no logic in specs              |
+| Scalability               | Adding a new module must not require touching existing code                                          |
+| Reliability ownership     | Web-first assertions, zero `waitForTimeout`, retries policy, flaky quarantine strategy documented    |
+| CI/CD ownership           | Real GitHub Actions workflow: matrix browsers, sharding, artifact upload, report publishing          |
+| Multi-test-type support   | UI + API (auth/cart endpoints) + regression tagging + a perf smoke                                   |
+| AI competency             | Documented AI-assisted workflow: test generation, selector healing, failure triage — with guardrails |
+| Craftsmanship             | Typed everything, lint + format + typecheck gates, small pure helpers, meaningful names              |
+| Bar-raising / mentoring   | README rationale section written as team standards + "why this, not that" trade-offs                 |
 
 ---
 
