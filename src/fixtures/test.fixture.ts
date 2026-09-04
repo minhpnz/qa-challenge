@@ -103,7 +103,9 @@ export const test = base.extend<TestFixtures>({
     await use(await api.loginOrThrow(registeredUser));
   },
 
-  loggedInUser: async ({ page, homePage, loginModal, navBar, registeredUser }, use) => {
+  // No logout in teardown: the browser context is discarded after every test, so
+  // logging out would only add a flake surface for zero isolation gain.
+  loggedInUser: async ({ homePage, loginModal, navBar, registeredUser }, use) => {
     await test.step(`Log in as "${registeredUser.username}" via the UI`, async () => {
       await homePage.goto();
       await homePage.expectLoaded();
@@ -115,9 +117,6 @@ export const test = base.extend<TestFixtures>({
       await loginModal.expectClosed();
     });
     await use(registeredUser);
-    // No logout in teardown: the browser context is discarded after every test,
-    // so logging out would only add a flake surface for zero isolation gain.
-    void page;
   },
 });
 
