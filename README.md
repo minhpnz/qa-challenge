@@ -1,11 +1,47 @@
 # DemoBlaze E2E Automation Framework
 
 A Playwright + TypeScript automation framework for [demoblaze.com](https://www.demoblaze.com/),
-covering the **Login** and **Cart/Checkout** journeys across UI, API and performance layers.
+covering the **Login** and **Cart/Checkout** journeys across UI, API and performance layers —
+plus the documented test case suite those journeys were derived from.
 
 Built to be adopted by a team, not to pass a demo: every structural decision below
 is written down with the alternative it was chosen over, because a framework
 nobody can reason about is a framework nobody will extend.
+
+## Deliverables
+
+| #   | Deliverable                                                   | Where                                                                                                               |
+| --- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Test case suite** — 94 cases across Login and Cart/Checkout | [`docs/DemoBlaze-Test-Cases.xlsx`](docs/DemoBlaze-Test-Cases.xlsx) · [CSVs for Google Sheets](docs/test-cases-csv/) |
+| 2   | **Automation framework + demo scripts**                       | this repository — see _Framework structure_ below                                                                   |
+| 3   | **Documentation** — structure, rationale, run steps           | this README, plus [`docs/api-contract.md`](docs/api-contract.md) and [`docs/findings.md`](docs/findings.md)         |
+
+---
+
+## Test case suite
+
+94 documented cases — **44 Login**, **50 Cart/Checkout** — split across four tabs
+(Summary, Login, Cart, Defects), with per-case preconditions, numbered steps, test
+data, expected results, priority, and a **direct reference to the spec that
+automates it**. 56 of the 94 have an executable check; the other 38 are
+deliberately manual (browser chrome such as Escape and browser Back, network-fault
+injection, and security probes that need a controlled environment).
+
+Two conventions worth calling out:
+
+- **Where the app is defective, the row states both the expected and the observed
+  behaviour** and names the defect ID. A test case that quietly records a bug as
+  correct behaviour is worse than no test case — it launders the defect into a
+  requirement.
+- **Prices, ids and totals are never asserted as constants.** They are read from
+  the API at runtime, so a promotion or a catalogue reorder does not turn the
+  suite red for a non-defect reason.
+
+The workbook is generated from `scripts/test_case_data.py` — reviewable in a pull
+request, diffable over time, and impossible to desync from the automation
+references it cites. Regenerate with `python3 scripts/generate_test_cases.py`;
+import instructions for Google Sheets are in
+[`docs/test-cases-csv/README.md`](docs/test-cases-csv/README.md).
 
 ---
 
@@ -302,11 +338,20 @@ now" is not a review comment.
 
 ## What this suite found
 
-Nine defects and data-quality issues in the application under test, each pinned by
-an executable check rather than a paragraph in a document — including a checkout
-that accepts an empty cart for $0, an API endpoint that returns HTML 500 on empty
-input, and receipts dated a month early. Full list, with severity and the test that
-pins each one: [`docs/findings.md`](docs/findings.md).
+**15 defects** in the application under test — 9 pinned by an executable check, the
+rest by documented manual cases. The ones that would matter in production:
+
+|             |                                                                                                                             |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------- |
+| **DEMO-3**  | An empty cart checks out for $0 and issues a real order id                                                                  |
+| **DEMO-11** | No rate limiting or lockout — 20 consecutive failed logins were all accepted, verified against the live API                 |
+| **DEMO-14** | The receipt displays the full card number unmasked                                                                          |
+| **DEMO-15** | The order confirmation is rendered before the server confirms, so a customer can be told an order succeeded when it did not |
+| **DEMO-2**  | `POST /login` returns HTTP 500 with an HTML body on an empty username                                                       |
+| **DEMO-1**  | Every receipt is dated one month early (zero-indexed `getMonth()`)                                                          |
+
+Full list with severity, verification method and the test that pins each one:
+[`docs/findings.md`](docs/findings.md).
 
 ---
 

@@ -133,13 +133,51 @@ artifact should read as if it will be adopted by a whole QA org.
 
 ## 6. Status
 
-**Created:** 2026-09-04
+**Created:** 2026-09-04 · **Last updated:** 2026-09-05
 
 - [x] Repo initialized, `task.md` written.
-- [ ] Test case suite (Login + Cart) — Excel / Google Sheet.
-- [ ] Framework skeleton (Playwright + TypeScript).
-- [ ] Demo specs: login (valid creds), add-to-cart → place order.
-- [ ] API / regression / performance test-type support.
-- [ ] CI/CD workflow + reporting.
-- [ ] README (structure, rationale, run steps).
-- [ ] Push to public GitHub repo.
+- [x] **Framework** (Playwright + TypeScript). Layered `config → core → pages/components/api → fixtures → tests`.
+      5 browser/device projects + `api` + `performance` + a fail-fast health gate.
+- [x] **Demo specs**: log in with valid credentials; add to cart → place an order.
+      Both are `@smoke` tagged and assert the receipt against the cart total.
+- [x] **Test types**: UI (29 tests), API (19), performance (5); smoke/regression as tags, not folders.
+- [x] **CI/CD**: `.github/workflows/e2e.yml` — verify → api → sharded cross-browser ui → merged report;
+      performance budgets nightly.
+- [x] **Reporting**: HTML + JUnit + JSON + GitHub annotations; traces/screenshots/video on failure.
+- [x] **README** — structure, rationale ("why this, not that"), run steps, flaky-test policy, AI workflow.
+- [x] **Test case suite** — 94 cases (44 Login / 50 Cart) in `docs/DemoBlaze-Test-Cases.xlsx`,
+      4 tabs, live COUNTIF summary, dropdown validation, per-case automation references.
+      Import-ready CSVs + Google Sheets instructions in `docs/test-cases-csv/`.
+      Generated from `scripts/test_case_data.py` so it stays reviewable and diffable.
+- [x] **Findings**: 15 defects in the AUT documented in `docs/findings.md` (9 pinned by automated tests),
+      plus 7 framework-side flake lessons written up as standards.
+- [ ] **Push to a public GitHub repo** and put the link in the submission email. ← only remaining deliverable
+
+### Verification status
+
+| Suite                                        | Result                                                                                | When          |
+| -------------------------------------------- | ------------------------------------------------------------------------------------- | ------------- |
+| API (19 tests)                               | ✅ 19/19 in 7.1s                                                                      | quiet machine |
+| UI Chromium (29 tests)                       | ✅ 29/29 in 1.0m                                                                      | quiet machine |
+| UI Firefox / WebKit                          | ⚠️ partial — see note                                                                 |               |
+| Lint + format + typecheck (`npm run verify`) | ✅ clean                                                                              | current       |
+| Workbook formulas (32)                       | ✅ no unknown sheets/functions/ranges; all 22 COUNTIF/COUNTA independently recomputed | current       |
+
+**Note on the last runs:** macOS XProtect (peaked ~489% CPU) and Avira (~285%) began
+scanning the freshly-installed Playwright browser binaries and `node_modules`, driving
+load average past 400. Under that, even the browserless API suite went from 7s to 10.8
+minutes with navigation timeouts — the machine, not the code. Three changes landed after
+the last clean browser run (cart specs restructured onto a `beforeEach` precondition hook,
+`video` default changed to `on-first-retry`, `loggedInUser` fixture simplified); they pass
+`npm run verify` but want one clean `npm run test:ci` once the scans finish. Excluding this
+directory from Avira would also help.
+
+### Google Sheet
+
+Destination sheet (currently empty, publicly readable):
+https://docs.google.com/spreadsheets/d/1RFBl-dfosbwtPEpF2U1ENG3hvF3ey_ou7N26z6E1m-A/edit
+
+There is no write access from this environment, so the content is delivered as the
+`.xlsx` (upload it with **File → Import → Replace spreadsheet** to keep formatting and
+formulas) and as per-tab CSVs. Full instructions: `docs/test-cases-csv/README.md`.
+Set the link to **Anyone with the link — Viewer** before submitting.
