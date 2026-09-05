@@ -187,28 +187,31 @@ runtime, so no credentials exist in the history.
 
 ### Verification status
 
-| Suite                                        | Result                                                                                        | Evidence                          |
-| -------------------------------------------- | --------------------------------------------------------------------------------------------- | --------------------------------- |
-| API (19 tests)                               | ✅ 19/19 in 7.1s                                                                              | full run                          |
-| UI Chromium (29 tests)                       | ✅ 29/29 in 1.0m                                                                              | full run                          |
-| Performance (5 tests)                        | ✅ API-latency 2/2 consistently; page budgets 4/5 repeat runs (1 loss to an external SIGKILL) | full run + 5x repeat              |
-| UI Firefox / WebKit                          | ⚠️ configured, never a clean full pass on this machine                                        | see note                          |
-| CI workflow                                  | ⚠️ structurally validated, never executed — no GitHub remote yet                              | YAML parsed, jobs/matrix verified |
-| Lint + format + typecheck (`npm run verify`) | ✅ clean                                                                                      | current                           |
-| Workbook formulas (32)                       | ✅ no unknown sheets/functions/ranges; all 22 COUNTIF/COUNTA independently recomputed         | static validation                 |
+Cross-browser runs were done in the official Playwright container
+(`npm run test:docker <project>`) — the same Linux image CI targets, and the only
+way to get a trustworthy result on this machine (see the note below).
 
-**Note — the browser failures on this machine are external.** Playwright's
-`chrome-headless-shell` processes are being **SIGKILLed mid-run**, with
-`exception while trying to kill process: Error: kill EPERM` in the browser log.
-That is the Avira system extension (`com.avira.scanservice`), not the framework:
-the same one-line `page.goto` test passes 5/5 in one minute and then fails the
-next. macOS XProtect compounded it earlier, peaking near 489% CPU while scanning
-the newly installed browser binaries and `node_modules`. Full Chromium
-(`channel: 'chromium'`) is blocked outright — every launch returns `kill EPERM`.
+| Suite                     | Result                                                                       | How                       |
+| ------------------------- | ---------------------------------------------------------------------------- | ------------------------- |
+| API (19 tests)            | ✅ 19/19 in 7.6s — also passes with **no browsers installed**, as CI runs it | host + empty browser path |
+| UI Chromium (29 tests)    | ✅ 29/29 in 1.0m                                                             | host                      |
+| UI Firefox (29 tests)     | ✅ 29/29 in 2.4m                                                             | Docker                    |
+| UI WebKit (29 tests)      | ✅ 28 passed + 1 flaky (passed on retry) in 3.2m — under triage              | Docker                    |
+| Performance (5 tests)     | ✅ API latency 2/2; page budgets 4/5 repeats (1 lost to an external SIGKILL) | host                      |
+| Lint + format + typecheck | ✅ `npm run verify` clean                                                    | host                      |
+| Clean clone               | ✅ all deliverables present, no stray artifacts, lockfile committed          | `git clone` to a temp dir |
+| Workbook formulas (32)    | ✅ no unknown sheets/functions/ranges; 22 COUNTIF/COUNTA recomputed          | static validation         |
+| Workbook cross-references | ✅ every defect reachable from a case and back; no duplicate or dangling IDs | integrity script          |
 
-**To get a clean cross-browser run:** add this directory (and
-`~/Library/Caches/ms-playwright`) to the Avira exclusion list, then
-`npm run test:cross-browser`. CI is unaffected — GitHub runners have no such agent.
+**Note — browser failures on this host are external, not the framework.** Playwright's
+browser processes are **SIGKILLed mid-run** by the Avira system extension
+(`com.avira.scanservice`), with `kill EPERM` in the browser log. A host cross-browser
+run gave 56 failed / 1 passed — and every single failure was a launch or process kill,
+with **zero assertion failures**. The identical suite is green in Docker. Full Chromium
+(`channel: 'chromium'`) will not launch on this host at all.
+
+To run cross-browser natively, add this directory and `~/Library/Caches/ms-playwright`
+to the Avira exclusion list. CI is unaffected — GitHub runners have no such agent.
 
 ### Google Sheet
 

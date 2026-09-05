@@ -1,4 +1,5 @@
 import { expect, type Locator, type Page, type Response } from '@playwright/test';
+import { config } from '../../config';
 import { BasePage } from '../core';
 import { NavBar, OrderModal } from '../components';
 
@@ -35,6 +36,13 @@ export class CartPage extends BasePage {
   override async goto(): Promise<Response | null> {
     const cartFetched = this.page.waitForResponse(
       (response) => response.url().includes('/viewcart') && response.request().method() === 'POST',
+      // Navigation budget, not the action budget. `waitForResponse` silently
+      // inherits the (short) action timeout, but this wait is part of loading the
+      // page, not of clicking something — and on WebKit the round trip measured
+      // 9.5–13.7s against a 10s action timeout, i.e. flaky by exactly the margin
+      // of the wrong budget. Naming the right timeout fixes the cause; bumping
+      // the global action timeout would have hidden it everywhere else.
+      { timeout: config.timeouts.navigation },
     );
     const navigation = await super.goto();
     await cartFetched;
