@@ -19,6 +19,7 @@
     "test:debug": "PWDEBUG=1 playwright test --project=ui-chromium --workers=1",
     "test:ci": "playwright test --project=ui-chromium --project=api",
     "test:docker": "./scripts/test-in-docker.sh",
+    "report:images": "./scripts/capture-report-images.sh",
     "codegen": "playwright codegen https://www.demoblaze.com",
     "report": "playwright show-report",
     "trace": "playwright show-trace",

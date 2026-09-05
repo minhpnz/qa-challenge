@@ -181,6 +181,14 @@ git push -u origin main
 `gh` is already authenticated as `minhpnz` over SSH, so no further login is needed.
 Before sending the link, confirm the repo is set to **Public** in Settings.
 
+Once the first Actions run is green, add the badge to the top of `README.md` — a
+reviewer seeing a passing pipeline before they read a line of code is worth more
+than a paragraph claiming CI works:
+
+```markdown
+[![E2E](https://github.com/minhpnz/<repo-name>/actions/workflows/e2e.yml/badge.svg)](https://github.com/minhpnz/<repo-name>/actions/workflows/e2e.yml)
+```
+
 Nothing sensitive is tracked: `.env` is gitignored (only `.env.example` is committed,
 holding defaults and no secrets), and the suite creates its own throwaway accounts at
 runtime, so no credentials exist in the history.

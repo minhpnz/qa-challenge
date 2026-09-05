@@ -16,6 +16,12 @@ nobody can reason about is a framework nobody will extend.
 | 2   | **Automation framework + demo scripts**                       | this repository — see _Framework structure_ below                                                                   |
 | 3   | **Documentation** — structure, rationale, run steps           | this README, plus [`docs/api-contract.md`](docs/api-contract.md) and [`docs/findings.md`](docs/findings.md)         |
 
+![Playwright HTML report — 33 tests, all passing](docs/images/report-overview.png)
+
+_The Chromium suite, captured from a real run in the Playwright container.
+Tags are visible on every test, so `--grep @smoke` and the CI matrix are
+self-evident. Regenerate with `npm run report:images`._
+
 ---
 
 ## Test case suite
@@ -309,6 +315,16 @@ a startup error rather than a silently skipped assertion.
   run-over-run from the report rather than reconstructed from a log
 
 Sharded CI runs write `blob` reports that are merged into a single HTML report.
+
+![A single test in the report, expanded to its steps](docs/images/report-test-detail.png)
+
+_One test expanded. Two things worth noticing: the steps read as the layered
+architecture — `src/pages/cart.page.ts`, `src/components/order.modal.ts`,
+`src/api/demoblaze.client.ts` — so a failure points at the layer that owns the
+problem rather than at an anonymous selector; and the API calls used to seed the
+cart appear inline, making it obvious which part was setup and which part was the
+behaviour under test. The `test-user` attachment records the ephemeral account,
+so a failure can be reproduced against the exact data that produced it._
 
 ---
 
