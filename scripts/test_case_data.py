@@ -668,15 +668,15 @@ CART = [
      "-",
      "1. Click Phones, then Laptops, then Monitors\n2. Inspect the returned products",
      "categories: phone, notebook, monitor",
-     "Each filter returns a non-empty set and no product from another category leaks in",
-     "tests/api/catalog.api.spec.ts › filters by category without leaking other categories", ""),
+     "Each filter returns a non-empty set and no product from another category leaks in. Note the three category links share id='itemc' (DEMO-7), so they must be selected by role and text",
+     "tests/api/catalog.api.spec.ts › filters by category without leaking other categories", "DEMO-7"),
 
     ("CRT-050", "Catalogue", "The catalogue listing endpoint is paginated", "Edge case", "P2",
      "-",
      "1. Call GET /entries\n2. Compare against the union of the three category queries",
      "-",
-     "/entries returns only the first 9 of 15 products. Any test or client that treats it as the whole catalogue will miss every monitor — documented in docs/api-contract.md",
-     "tests/api/catalog.api.spec.ts › returns a non-empty product list", ""),
+     "/entries returns only the first 9 of 15 products. Any test or client that treats it as the whole catalogue will miss every monitor — documented in docs/api-contract.md. One title also carries a trailing newline (DEMO-8), so title comparisons must be trimmed",
+     "tests/api/catalog.api.spec.ts › returns a non-empty product list", "DEMO-8"),
 ]
 
 DEFECTS = [
