@@ -1,9 +1,9 @@
 Section,Value
 Application under test,https://www.demoblaze.com/
 Scope,Login (incl. registration dependency) and Cart / Checkout
-Total test cases,103
+Total test cases,107
 Login test cases,44
-Cart test cases,59
-Automated,62
+Cart test cases,63
+Automated,66
 Manual / exploratory,41
 Defects raised,18

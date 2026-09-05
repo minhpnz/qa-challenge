@@ -1,5 +1,21 @@
 import { expect, test } from '../../../src/fixtures';
 import { PRODUCTS } from '../../../src/data';
+import { CartPage, HomePage } from '../../../src/pages';
+import { LoginModal, NavBar } from '../../../src/components';
+import type { Product } from '../../../src/api';
+
+/**
+ * Kept outside the test body so the empty-catalogue guard is not a conditional
+ * inside a test — a branch in a spec means two possible behaviours and only one
+ * of them gets exercised on any given run.
+ */
+function priceExtremes(products: Product[]): { cheapest: Product; dearest: Product } {
+  const sorted = [...products].sort((a, b) => a.price - b.price);
+  const [cheapest] = sorted;
+  const dearest = sorted.at(-1);
+  if (!cheapest || !dearest) throw new Error('Catalogue is empty — cannot pick price extremes.');
+  return { cheapest, dearest };
+}
 
 /**
  * Cart — add, inspect, remove.
@@ -157,12 +173,89 @@ test.describe('Cart', () => {
     await cartPage.expectContains(product.title);
   });
 
+  test('totals a large cart correctly @regression', async ({ api, authToken, cartPage }) => {
+    // Boundary on quantity rather than on a field. Totals are the kind of thing
+    // that works for two items and drifts for twenty — string concatenation
+    // instead of addition, a partial re-render, a paginated fetch. Ten lines is
+    // enough to expose that class of bug and still finish quickly.
+    const products = await api.listAllProducts();
+    const chosen = products.slice(0, 10);
+    for (const product of chosen) {
+      await api.addToCart(authToken, product.id);
+    }
+
+    await cartPage.goto();
+    await cartPage.expectLoaded();
+    await expect(cartPage.rows).toHaveCount(chosen.length);
+
+    const expectedTotal = chosen.reduce((sum, product) => sum + product.price, 0);
+    await cartPage.expectTotal(expectedTotal);
+    expect(await cartPage.sumOfLines()).toBe(expectedTotal);
+  });
+
+  test('totals the cheapest and most expensive products correctly @regression', async ({
+    api,
+    authToken,
+    cartPage,
+  }) => {
+    // Price extremes, chosen at runtime rather than hardcoded: the catalogue can
+    // change without this test going stale, and it exercises the widest possible
+    // spread the real data allows.
+    const { cheapest, dearest } = priceExtremes(await api.listAllProducts());
+
+    await api.addToCart(authToken, cheapest.id);
+    await api.addToCart(authToken, dearest.id);
+
+    await cartPage.goto();
+    await cartPage.expectLoaded();
+    await cartPage.expectTotal(cheapest.price + dearest.price);
+  });
+
   test('shows an empty cart for a brand-new account @regression', async ({ cartPage }) => {
     await cartPage.goto();
     await cartPage.expectLoaded();
 
     await cartPage.expectEmpty();
     await cartPage.expectTotal(0);
+  });
+});
+
+test.describe('Cart — persistence across sessions', () => {
+  test('cart survives into a completely fresh browser session @regression', async ({
+    api,
+    authToken,
+    browser,
+    registeredUser,
+  }) => {
+    // Distinct from the reload test: a reload keeps the browser context, its
+    // cookies and its memory. This opens a brand-new context — the equivalent of
+    // the customer coming back tomorrow on the same machine — and logs in again
+    // from scratch. It is what proves the cart is genuinely server-side state
+    // rather than something the page happened to still be holding.
+    const product = await api.findProductByTitle(PRODUCTS.phone.title);
+    await api.addToCart(authToken, product.id);
+
+    const freshContext = await browser.newContext();
+    try {
+      const freshPage = await freshContext.newPage();
+      const home = new HomePage(freshPage);
+      const nav = new NavBar(freshPage);
+      const login = new LoginModal(freshPage);
+      const cart = new CartPage(freshPage);
+
+      await home.goto();
+      await home.expectLoaded();
+      await nav.openLogin();
+      await login.login(registeredUser);
+      await nav.expectLoggedInAs(registeredUser.username);
+
+      await cart.goto();
+      await cart.expectLoaded();
+      await cart.expectContains(product.title);
+      await cart.expectTotal(product.price);
+    } finally {
+      await freshContext.close();
+    }
   });
 });
 

@@ -678,6 +678,34 @@ CART = [
      "/entries returns only the first 9 of 15 products. Any test or client that treats it as the whole catalogue will miss every monitor — documented in docs/api-contract.md. One title also carries a trailing newline (DEMO-8), so title comparisons must be trimmed",
      "tests/api/catalog.api.spec.ts › returns a non-empty product list", "DEMO-8"),
 
+    ("CRT-060", "End-to-end", "Complete purchase journey from registration to receipt", "Functional", "P0",
+     "No account exists; user is a first-time visitor",
+     "1. Open the home page\n2. Register a new account via 'Sign up'\n3. Log in with those credentials\n4. Filter by a category\n5. Open a product and check its title and price\n6. Add it to the cart\n7. Open the cart and check the line and total\n8. Place the order with valid details\n9. Confirm the receipt\n10. Re-open the cart",
+     "new account + Samsung galaxy s6 + valid order details",
+     "Every step succeeds and state carries between them: the account can log in, the product page matches the catalogue, the cart total matches the price, the receipt amount matches the cart, and the cart is empty afterwards both in the UI and on the server",
+     "tests/ui/cart/journey.spec.ts › register, log in, add to cart and buy", ""),
+
+    ("CRT-061", "Boundary", "A large cart totals correctly and renders every line", "Edge case", "P1",
+     "User is logged in with an empty cart",
+     "1. Add 10 different products\n2. Open the Cart page\n3. Compare the total against the sum of the visible lines",
+     "10 distinct products",
+     "All 10 lines render and the displayed total equals the arithmetic sum of the lines. Guards the class of bug that works for two items and drifts at scale — string concatenation instead of addition, partial re-render, paginated fetch",
+     "tests/ui/cart/add-to-cart.spec.ts › totals a large cart correctly", ""),
+
+    ("CRT-062", "Boundary", "Cheapest and most expensive products total correctly", "Edge case", "P2",
+     "User is logged in with an empty cart",
+     "1. Resolve the cheapest and most expensive products from the catalogue at runtime\n2. Add both\n3. Open the Cart page",
+     "price extremes, resolved at runtime",
+     "The total equals the sum of the two prices — the widest spread the real catalogue allows, with no rounding or truncation",
+     "tests/ui/cart/add-to-cart.spec.ts › totals the cheapest and most expensive products correctly", ""),
+
+    ("CRT-063", "Persistence", "Cart survives into a completely fresh browser session", "Edge case", "P1",
+     "An account with an item in its cart",
+     "1. Add a product while logged in\n2. Open a brand-new browser session (new context, no cookies)\n3. Log in with the same account\n4. Open the Cart page",
+     "same account, clean browser profile",
+     "The product is still in the cart. Distinct from a reload, which keeps the context and its memory — this proves the cart is genuinely server-side state, as a returning customer on a new day would experience",
+     "tests/ui/cart/add-to-cart.spec.ts › cart survives into a completely fresh browser session", ""),
+
     # ---------------- Negative: invalid input, auth failures, error handling ----------------
     ("CRT-051", "Error handling", "Malformed auth token is rejected when adding to the cart", "Negative", "P1",
      "User has a session",
