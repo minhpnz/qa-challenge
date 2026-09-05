@@ -18,19 +18,26 @@ function readString(key: string, fallback: string): string {
   return raw === undefined || raw.trim() === '' ? fallback : raw.trim();
 }
 
-function readNumber(key: string, fallback: number): number {
+/**
+ * `min` is a parameter rather than a hardcoded `> 0` because the knobs have
+ * genuinely different valid ranges: a timeout of zero is meaningless, but
+ * `RETRIES=0` is the correct way to say "fail fast, no retries" — and rejecting
+ * it makes the documented switch unusable. Validation that is stricter than
+ * reality is still a bug; it just fails in the safer direction.
+ */
+function readNumber(key: string, fallback: number, min = 1): number {
   const raw = process.env[key];
   if (raw === undefined || raw.trim() === '') return fallback;
   const parsed = Number(raw);
-  if (!Number.isFinite(parsed) || parsed <= 0) {
-    throw new Error(`Config error: ${key}="${raw}" is not a positive number.`);
+  if (!Number.isFinite(parsed) || parsed < min) {
+    throw new Error(`Config error: ${key}="${raw}" must be a number >= ${min}.`);
   }
   return parsed;
 }
 
-function readOptionalNumber(key: string): number | undefined {
+function readOptionalNumber(key: string, min = 1): number | undefined {
   const raw = process.env[key];
-  return raw === undefined || raw.trim() === '' ? undefined : readNumber(key, 0);
+  return raw === undefined || raw.trim() === '' ? undefined : readNumber(key, 0, min);
 }
 
 function readBoolean(key: string, fallback: boolean): boolean {
@@ -69,7 +76,8 @@ export const config = {
 
   headless: readBoolean('HEADLESS', true),
   workers: readOptionalNumber('WORKERS') ?? (CI ? 4 : undefined),
-  retries: readOptionalNumber('RETRIES') ?? (CI ? 2 : 0),
+  // Zero is a valid, useful setting here — see readNumber above.
+  retries: readOptionalNumber('RETRIES', 0) ?? (CI ? 2 : 0),
 
   timeouts: {
     action: readNumber('ACTION_TIMEOUT_MS', 10_000),
