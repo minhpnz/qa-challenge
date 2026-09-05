@@ -3,7 +3,7 @@
 Defects and behaviours discovered while building the test suite for
 [demoblaze.com](https://www.demoblaze.com/).
 
-Each entry names how it was verified. Nine are pinned by an executable test —
+Each entry names how it was verified. Thirteen are pinned by an executable test —
 a finding with no test attached is a finding that regresses silently. The rest
 are covered by documented manual cases in
 [`DemoBlaze-Test-Cases.xlsx`](DemoBlaze-Test-Cases.xlsx), because they need

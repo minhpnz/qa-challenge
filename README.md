@@ -20,7 +20,7 @@ nobody can reason about is a framework nobody will extend.
 
 ## Test case suite
 
-94 documented cases — **44 Login**, **50 Cart/Checkout** — across four tabs
+103 documented cases — **44 Login**, **59 Cart/Checkout** — across four tabs
 (Summary, Login, Cart, Defects). 18 columns per case, in three blocks:
 
 - **Design** — id, module, feature area, title, type, priority, preconditions,
@@ -32,7 +32,7 @@ nobody can reason about is a framework nobody will extend.
 - **Traceability** — automated yes/no, the **exact spec and test title** that runs
   it, and the defect id where one applies.
 
-56 of the 94 have an executable check; the other 38 are deliberately manual
+62 of the 103 have an executable check; the other 41 are deliberately manual
 (browser chrome such as Escape and browser Back, network-fault injection, and
 security probes that need a controlled environment).
 
