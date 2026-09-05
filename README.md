@@ -1,5 +1,7 @@
 # DemoBlaze E2E Automation Framework
 
+[![E2E](https://github.com/minhpnz/qa-challenge/actions/workflows/e2e.yml/badge.svg)](https://github.com/minhpnz/qa-challenge/actions/workflows/e2e.yml)
+
 A Playwright + TypeScript automation framework for [demoblaze.com](https://www.demoblaze.com/),
 covering the **Login** and **Cart/Checkout** journeys across UI, API and performance layers —
 plus the documented test case suite those journeys were derived from.
