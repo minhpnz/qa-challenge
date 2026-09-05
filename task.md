@@ -187,15 +187,15 @@ runtime, so no credentials exist in the history.
 
 ### Verification status
 
-| Suite                                        | Result                                                                                     | Evidence                          |
-| -------------------------------------------- | ------------------------------------------------------------------------------------------ | --------------------------------- |
-| API (19 tests)                               | ✅ 19/19 in 7.1s                                                                            | full run                          |
-| UI Chromium (29 tests)                       | ✅ 29/29 in 1.0m                                                                            | full run                          |
+| Suite                                        | Result                                                                                        | Evidence                          |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------- | --------------------------------- |
+| API (19 tests)                               | ✅ 19/19 in 7.1s                                                                              | full run                          |
+| UI Chromium (29 tests)                       | ✅ 29/29 in 1.0m                                                                              | full run                          |
 | Performance (5 tests)                        | ✅ API-latency 2/2 consistently; page budgets 4/5 repeat runs (1 loss to an external SIGKILL) | full run + 5x repeat              |
-| UI Firefox / WebKit                          | ⚠️ configured, never a clean full pass on this machine                                      | see note                          |
-| CI workflow                                  | ⚠️ structurally validated, never executed — no GitHub remote yet                            | YAML parsed, jobs/matrix verified |
-| Lint + format + typecheck (`npm run verify`) | ✅ clean                                                                                     | current                           |
-| Workbook formulas (32)                       | ✅ no unknown sheets/functions/ranges; all 22 COUNTIF/COUNTA independently recomputed        | static validation                 |
+| UI Firefox / WebKit                          | ⚠️ configured, never a clean full pass on this machine                                        | see note                          |
+| CI workflow                                  | ⚠️ structurally validated, never executed — no GitHub remote yet                              | YAML parsed, jobs/matrix verified |
+| Lint + format + typecheck (`npm run verify`) | ✅ clean                                                                                      | current                           |
+| Workbook formulas (32)                       | ✅ no unknown sheets/functions/ranges; all 22 COUNTIF/COUNTA independently recomputed         | static validation                 |
 
 **Note — the browser failures on this machine are external.** Playwright's
 `chrome-headless-shell` processes are being **SIGKILLed mid-run**, with
