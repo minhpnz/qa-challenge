@@ -227,6 +227,14 @@ Retries exist to absorb infrastructure noise. They are not a flake strategy.
 `playwright/no-skipped-test`, `@typescript-eslint/no-floating-promises`.
 There is not a single `waitForTimeout` in this repository.
 
+**Reproducing CI locally.** `npm run test:docker ui-webkit` runs a project inside
+the Playwright container pinned to the installed version, so "green on my
+machine, red in CI" is a two-minute question rather than a push-and-wait loop.
+It also isolates the suite from endpoint-protection agents, which on a developer
+laptop will happily `SIGKILL` Playwright's browser processes — that surfaces as
+dozens of `browserType.launch failed` errors that look like test bugs and are
+not. Both cross-browser runs below were verified this way.
+
 **Enforced by design:**
 
 | Rule                                                                      | Why                                                                                                                              |

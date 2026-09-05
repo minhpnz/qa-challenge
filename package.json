@@ -2,7 +2,7 @@
   "name": "demoblaze-e2e",
   "version": "1.0.0",
   "private": true,
-  "description": "E2E automation framework for demoblaze.com — UI, API, regression and performance layers on Playwright + TypeScript",
+  "description": "E2E automation framework for demoblaze.com \u2014 UI, API, regression and performance layers on Playwright + TypeScript",
   "engines": {
     "node": ">=18.17.0"
   },
@@ -18,6 +18,7 @@
     "test:headed": "playwright test --project=ui-chromium --headed",
     "test:debug": "PWDEBUG=1 playwright test --project=ui-chromium --workers=1",
     "test:ci": "playwright test --project=ui-chromium --project=api",
+    "test:docker": "./scripts/test-in-docker.sh",
     "codegen": "playwright codegen https://www.demoblaze.com",
     "report": "playwright show-report",
     "trace": "playwright show-trace",
