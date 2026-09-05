@@ -35,8 +35,24 @@ DEFECT_HEADERS = [
 ]
 DEFECT_WIDTHS = [11, 12, 10, 11, 9, 46, 72, 20, 60]
 
-thin = Side(style="thin", color="BFBFBF")
-BORDER = Border(left=thin, right=thin, top=thin, bottom=thin)
+# Light verticals to separate columns, a darker rule under every row. Tall
+# wrapped cells swallow a uniformly light grid, which is what made the earlier
+# version hard to scan.
+VLINE = Side(style="thin", color="D6DCE4")
+HLINE = Side(style="thin", color="8496B0")
+BORDER = Border(left=VLINE, right=VLINE, top=None, bottom=HLINE)
+HEAD_BORDER = Border(left=VLINE, right=VLINE, top=None, bottom=Side(style="medium", color=NAVY))
+
+
+def estimate_height(values, widths):
+    """Approximate the wrapped height so rows are readable without relying on the
+    viewer's auto-fit, which Excel and Sheets apply inconsistently to wrapped text."""
+    lines = 1
+    for value, width in zip(values, widths):
+        text = str(value)
+        wrapped = sum(max(1, -(-len(seg) // max(8, int(width * 0.95)))) for seg in text.split("\n"))
+        lines = max(lines, wrapped)
+    return min(14 * min(lines, 12) + 6, 180)
 
 
 def style_header(ws, headers, widths):
@@ -45,7 +61,7 @@ def style_header(ws, headers, widths):
         cell.font = Font(bold=True, color="FFFFFF", size=11)
         cell.fill = PatternFill("solid", start_color=NAVY)
         cell.alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
-        cell.border = BORDER
+        cell.border = HEAD_BORDER
         ws.column_dimensions[get_column_letter(col)].width = width
     ws.row_dimensions[1].height = 26
     ws.freeze_panes = "C2"
@@ -73,7 +89,7 @@ def write_cases(ws, rows):
             ws.cell(row=r, column=10).font = Font(color=GREY)
         if defect:
             ws.cell(row=r, column=12).fill = PatternFill("solid", start_color=AMBER)
-        ws.row_dimensions[r].height = None
+        ws.row_dimensions[r].height = estimate_height(values, WIDTHS)
 
     last = len(rows) + 1
     for column, options in (
@@ -103,86 +119,144 @@ def write_defects(ws, rows):
 
 
 def write_summary(ws, n_login, n_cart, n_defects):
-    ws.column_dimensions["A"].width = 46
-    ws.column_dimensions["B"].width = 14
-    ws.column_dimensions["C"].width = 14
-    ws.column_dimensions["D"].width = 14
-    ws.column_dimensions["E"].width = 70
+    """Summary is laid out as three bordered tables.
 
-    def heading(row, text):
-        c = ws.cell(row=row, column=1, value=text)
-        c.font = Font(bold=True, size=13, color=NAVY)
+    Gridlines are off, so every block draws its own frame — text floating on a
+    blank sheet with no rules is unreadable, which is exactly what an earlier
+    version of this tab did.
+    """
+    for col, width in zip("ABCDE", (44, 12, 12, 12, 78)):
+        ws.column_dimensions[col].width = width
+
+    def table_header(row, labels, span_last=False):
+        for offset, text in enumerate(labels):
+            c = ws.cell(row=row, column=1 + offset, value=text)
+            c.font = Font(bold=True, color="FFFFFF", size=11)
+            c.fill = PatternFill("solid", start_color=NAVY)
+            c.border = Border(left=VLINE, right=VLINE, bottom=Side(style="medium", color=NAVY))
+            c.alignment = Alignment(horizontal="left" if offset == 0 else "center", vertical="center")
+        if span_last:
+            for col in range(len(labels) + 1, 6):
+                c = ws.cell(row=row, column=col)
+                c.fill = PatternFill("solid", start_color=NAVY)
+                c.border = Border(bottom=Side(style="medium", color=NAVY))
+        ws.row_dimensions[row].height = 20
+
+    def frame(row, last_col=5, band=False, bold=False, top_rule=False):
+        for col in range(1, last_col + 1):
+            c = ws.cell(row=row, column=col)
+            c.border = Border(
+                left=VLINE, right=VLINE,
+                top=Side(style="medium", color=NAVY) if top_rule else None,
+                bottom=HLINE,
+            )
+            if band:
+                c.fill = PatternFill("solid", start_color=BAND)
+            if bold:
+                c.font = Font(bold=True)
+            if col in (2, 3, 4):
+                c.alignment = Alignment(horizontal="center", vertical="center")
+            else:
+                c.alignment = Alignment(vertical="center", wrap_text=True)
 
     title = ws.cell(row=1, column=1, value="DemoBlaze — Login & Cart Test Case Suite")
     title.font = Font(bold=True, size=16, color=NAVY)
     ws.cell(row=2, column=1, value="Application under test: https://www.demoblaze.com/").font = Font(italic=True)
     ws.cell(row=3, column=1, value="Scope: Login (incl. registration as a dependency) and Cart / Checkout")
-    ws.cell(row=4, column=1, value="Generated from scripts/test_case_data.py — regenerate with: python3 scripts/generate_test_cases.py").font = Font(italic=True, color=GREY)
+    ws.cell(row=4, column=1,
+            value="Generated from scripts/test_case_data.py — regenerate with: python3 scripts/generate_test_cases.py"
+            ).font = Font(italic=True, color=GREY)
 
-    login_r, cart_r = f"2:{n_login + 1}", f"2:{n_cart + 1}"
-    L = f"'Login Test Cases'!$A${login_r.split(':')[0]}:$A${n_login + 1}"
-    C = f"'Cart Test Cases'!$A$2:$A${n_cart + 1}"
+    # ---------------- coverage ----------------
+    ws.cell(row=6, column=1, value="Coverage").font = Font(bold=True, size=13, color=NAVY)
+    table_header(7, ["Metric", "Login", "Cart", "Total", "Notes"])
 
-    heading(6, "Coverage")
-    for col, text in enumerate(["Metric", "Login", "Cart", "Total"], start=1):
-        c = ws.cell(row=7, column=col, value=text)
-        c.font = Font(bold=True, color="FFFFFF")
-        c.fill = PatternFill("solid", start_color=NAVY)
+    login_last, cart_last = n_login + 1, n_cart + 1
 
-    def counts(row, name, formula_login, formula_cart, note=""):
-        ws.cell(row=row, column=1, value=name).font = Font(bold=(name == "Total test cases"))
-        ws.cell(row=row, column=2, value=formula_login)
-        ws.cell(row=row, column=3, value=formula_cart)
+    def counts(row, name, col_letter, criterion, note="", band=False, bold=False):
+        ws.cell(row=row, column=1, value=name)
+        if criterion is None:
+            ws.cell(row=row, column=2, value=f"=COUNTA('Login Test Cases'!$A$2:$A${login_last})")
+            ws.cell(row=row, column=3, value=f"=COUNTA('Cart Test Cases'!$A$2:$A${cart_last})")
+        else:
+            ws.cell(row=row, column=2,
+                    value=f"=COUNTIF('Login Test Cases'!${col_letter}$2:${col_letter}${login_last},\"{criterion}\")")
+            ws.cell(row=row, column=3,
+                    value=f"=COUNTIF('Cart Test Cases'!${col_letter}$2:${col_letter}${cart_last},\"{criterion}\")")
         ws.cell(row=row, column=4, value=f"=B{row}+C{row}")
-        if note:
-            ws.cell(row=row, column=5, value=note).alignment = Alignment(wrap_text=True, vertical="top")
+        ws.cell(row=row, column=5, value=note)
+        frame(row, band=band, bold=bold)
 
-    counts(8, "Total test cases", f"=COUNTA({L})", f"=COUNTA({C})")
+    counts(8, "Total test cases", None, None, "44 Login + 50 Cart.", bold=True)
     for offset, ttype in enumerate(["Functional", "Negative", "Edge case", "Security", "UI"]):
-        counts(
-            9 + offset, f"  {ttype}",
-            f"=COUNTIF('Login Test Cases'!$D$2:$D${n_login + 1},\"{ttype}\")",
-            f"=COUNTIF('Cart Test Cases'!$D$2:$D${n_cart + 1},\"{ttype}\")",
-        )
-    counts(14, "P0 (critical path)",
-           f"=COUNTIF('Login Test Cases'!$E$2:$E${n_login + 1},\"P0\")",
-           f"=COUNTIF('Cart Test Cases'!$E$2:$E${n_cart + 1},\"P0\")")
-    counts(15, "Automated",
-           f"=COUNTIF('Login Test Cases'!$J$2:$J${n_login + 1},\"Yes\")",
-           f"=COUNTIF('Cart Test Cases'!$J$2:$J${n_cart + 1},\"Yes\")",
-           "Covered by the Playwright suite in this repository.")
-    counts(16, "Manual / exploratory",
-           f"=COUNTIF('Login Test Cases'!$J$2:$J${n_login + 1},\"No\")",
-           f"=COUNTIF('Cart Test Cases'!$J$2:$J${n_cart + 1},\"No\")",
-           "Deliberately not automated: browser-chrome behaviour (Escape, backdrop, browser Back), "
-           "network-fault injection, and security probes that need a controlled environment.")
+        counts(9 + offset, f"    {ttype}", "D", ttype, band=(offset % 2 == 0))
+    counts(14, "P0 — blocks release", "E", "P0",
+           "Login, add to cart, checkout, cross-account cart isolation.", bold=True)
+    counts(15, "Automated", "J", "Yes", "Covered by the Playwright suite in this repository.", band=True)
+    counts(16, "Manual / exploratory", "J", "No",
+           "Deliberately not automated: browser chrome (Escape, backdrop, browser Back), "
+           "network-fault injection, and security probes needing a controlled environment.")
+
     ws.cell(row=17, column=1, value="Automation coverage").font = Font(bold=True)
-    ws.cell(row=17, column=4, value="=IF(D8=0,0,D15/D8)").number_format = "0.0%"
-    ws.cell(row=17, column=5, value="Share of documented cases with an executable check. P0 coverage is the number that gates a release, not this one.").alignment = Alignment(wrap_text=True, vertical="top")
+    pct = ws.cell(row=17, column=4, value="=IF(D8=0,0,D15/D8)")
+    pct.number_format = "0.0%"
+    ws.cell(row=17, column=5,
+            value="Share of documented cases with an executable check. P0 coverage is what gates a "
+                  "release, not this number.")
+    frame(17, band=True, bold=False)
+    ws.cell(row=17, column=1).font = Font(bold=True)
 
-    heading(19, "Defects raised")
-    ws.cell(row=20, column=1, value="Total defects logged").font = Font(bold=True)
-    ws.cell(row=20, column=2, value=f"=COUNTA(Defects!$A$2:$A${n_defects + 1})")
+    # ---------------- defects ----------------
+    ws.cell(row=19, column=1, value="Defects raised").font = Font(bold=True, size=13, color=NAVY)
+    table_header(20, ["Severity", "Count", "", "", "Notes"])
+    ws.cell(row=21, column=1, value="Total logged")
+    ws.cell(row=21, column=2, value=f"=COUNTA(Defects!$A$2:$A${n_defects + 1})")
+    ws.cell(row=21, column=5, value="Full detail, with verification method, on the Defects tab.")
+    frame(21, bold=True)
+    severity_note = {
+        "High": "Empty-cart checkout, no login rate limiting, unmasked card number, "
+                "confirmation shown before the server confirms, HTTP 500 on empty username.",
+        "Medium": "Receipt dated a month early, presence-only order validation, username "
+                  "enumeration, no password policy, silent login failure when the API is down.",
+        "Low": "Anonymous cart discarded on login, duplicate DOM ids, trailing newline in a "
+               "product title, inconsistent confirmation copy, Enter does not submit.",
+    }
     for offset, severity in enumerate(["High", "Medium", "Low"]):
-        ws.cell(row=21 + offset, column=1, value=f"  {severity} severity")
-        ws.cell(row=21 + offset, column=2,
-                value=f"=COUNTIF(Defects!$C$2:$C${n_defects + 1},\"{severity}\")")
+        row = 22 + offset
+        ws.cell(row=row, column=1, value=f"    {severity} severity")
+        ws.cell(row=row, column=2, value=f"=COUNTIF(Defects!$C$2:$C${n_defects + 1},\"{severity}\")")
+        ws.cell(row=row, column=5, value=severity_note[severity])
+        frame(row, band=(offset % 2 == 0))
+        ws.cell(row=row, column=2).font = Font(bold=True, color={"High": "C00000", "Medium": "BF8F00", "Low": GREY}[severity])
 
-    heading(25, "How to read this workbook")
+    # ---------------- legend ----------------
+    ws.cell(row=27, column=1, value="How to read this workbook").font = Font(bold=True, size=13, color=NAVY)
+    table_header(28, ["Column / tab", "Meaning"])
+    ws.merge_cells(start_row=28, start_column=2, end_row=28, end_column=5)
     notes = [
-        ("Login Test Cases", "44 cases covering authentication, session handling, validation, security and boundaries."),
-        ("Cart Test Cases", "50 cases covering add-to-cart, cart management, persistence, isolation and checkout."),
-        ("Defects", "Every issue this suite found in the application, cross-referenced to the case that exposes it."),
-        ("Type", "Functional = intended behaviour. Negative = invalid input rejected. Edge case = boundary or unusual-but-valid. Security / UI as labelled."),
-        ("Priority", "P0 = blocks release (login, add to cart, checkout, cross-account isolation). P1 = important. P2 = lower risk."),
-        ("Automation Reference", "The exact spec and test title that executes the case, so a reviewer can jump from a row to running code."),
-        ("Expected Result", "Where the app is defective, the row states BOTH the expected behaviour and the observed one, and names the defect. A test case that silently documents a bug as correct is worse than no test case."),
+        ("Login Test Cases", "44 cases: authentication, session handling, validation, security, boundaries."),
+        ("Cart Test Cases", "50 cases: add-to-cart, cart management, persistence, isolation, checkout."),
+        ("Defects", "Every issue found in the application, cross-referenced to the case that exposes it."),
+        ("Type", "Functional = intended behaviour. Negative = invalid input rejected. Edge case = boundary "
+                 "or unusual-but-valid. Security / UI as labelled."),
+        ("Priority", "P0 = blocks release. P1 = important. P2 = lower risk."),
+        ("Automated", "Yes = an executable check exists. No = deliberately manual, for the reasons above."),
+        ("Automation Reference", "The exact spec and test title that runs the case, so a reviewer can go "
+                                 "from a row straight to running code."),
+        ("Expected Result", "Where the app is defective the row states BOTH the expected and the observed "
+                            "behaviour and names the defect. A case that records a bug as correct behaviour "
+                            "launders the defect into a requirement."),
     ]
     for offset, (name, text) in enumerate(notes):
-        ws.cell(row=26 + offset, column=1, value=name).font = Font(bold=True)
-        cell = ws.cell(row=26 + offset, column=5, value=text)
-        cell.alignment = Alignment(wrap_text=True, vertical="top")
-        ws.merge_cells(start_row=26 + offset, start_column=2, end_row=26 + offset, end_column=4)
+        row = 29 + offset
+        ws.cell(row=row, column=1, value=name).font = Font(bold=True)
+        ws.cell(row=row, column=2, value=text)
+        ws.merge_cells(start_row=row, start_column=2, end_row=row, end_column=5)
+        frame(row, band=(offset % 2 == 0))
+        ws.cell(row=row, column=2).alignment = Alignment(vertical="center", wrap_text=True)
+        ws.row_dimensions[row].height = 30 if len(text) > 96 else 18
+
+    ws.freeze_panes = "A5"
 
 
 def dump_csv(path, headers, rows):

@@ -39,22 +39,34 @@ Outline and build a straightforward E2E automation framework using a modern tool
 
 The framework must incorporate:
 
-- [ ] **Cross-browser / cross-platform support** (Chromium, Firefox, WebKit; desktop + mobile viewports)
-- [ ] **Modular design** for ease of updates and scalability (Page Objects / fixtures / layered structure)
-- [ ] **CI/CD compatibility** (GitHub Actions, Jenkins, GitLab CI, etc.) for automated execution
-- [ ] **Configurable parameters** (env, base URL, credentials, workers, retries, tags)
-- [ ] **Comprehensive reporting** (HTML report, traces, screenshots, videos on failure)
-- [ ] **Support for multiple test types**: **UI**, **API**, **regression**, **performance**
+- [x] **Cross-browser / cross-platform support** — 5 projects: `ui-chromium`, `ui-firefox`, `ui-webkit`, `ui-mobile-chrome` (Pixel 7), `ui-mobile-safari` (iPhone 14). Adding one is a config entry, not a fork of the suite.
+- [x] **Modular design** — layered `config → core → pages/components/api → fixtures → tests`, dependencies pointing one way. A spec never builds a page object, reads env, or holds a selector. Adding coverage adds files rather than editing them.
+- [x] **CI/CD compatibility** — `.github/workflows/e2e.yml`: `verify → api → ui (3 browsers × 2 shards) → merged report`, plus nightly performance. Portable by construction — it is `npx playwright test` plus env vars, so Jenkins/GitLab need no rewrite.
+- [x] **Configurable parameters** — `config/index.ts` resolves and validates every knob once and throws on a malformed value. Environment profiles as data; per-run `BASE_URL`/`API_BASE_URL` overrides; workers, retries, timeouts, artifacts, perf budgets all env-driven.
+- [x] **Comprehensive reporting** — HTML (traces, screenshots, video), JUnit XML, JSON, GitHub annotations on CI. Sharded runs write blob reports merged into one HTML report. Tests attach their ephemeral account and raw perf metrics for triage.
+- [x] **Support for multiple test types** — UI (29 tests), API (19, no browser launched), performance (5, serial). Regression/smoke are **tags**, not folders, because scope-of-run is orthogonal to which layer a test exercises.
 
 ### 2.3 Automation Implementation Demo
 
 Build a basic automation demo on DemoBlaze covering:
 
-- [ ] **Login with valid credentials**
-- [ ] **Add to cart → place an order**
+- [x] **Login with valid credentials** — `tests/ui/login/login.spec.ts › logs in with valid credentials @smoke`
+- [x] **Add to cart → place an order** — `tests/ui/cart/add-to-cart.spec.ts › adds a product to the cart @smoke` and `tests/ui/cart/place-order.spec.ts › completes an order and reports the correct receipt @smoke`
 
 Scripts must include **appropriate validations** and handle **both typical and edge case
 scenarios gracefully** (stable waits, no hard sleeps, deterministic test data, clean teardown).
+
+- [x] **Validations** — the checkout test parses the receipt and asserts amount, card, name and
+      order id against what was submitted, then confirms the cart is empty **via the API**, not
+      just the UI. A confirmation showing the wrong amount is a worse defect than no confirmation.
+- [x] **Edge cases handled** — 29 of the 94 documented cases are edge cases; 17 are negative.
+      Both are automated where an executable check is the right instrument.
+- [x] **No hard sleeps** — zero `waitForTimeout` in the repo, enforced by ESLint
+      (`playwright/no-wait-for-timeout` as an error, alongside `no-force-option` and `no-skipped-test`).
+- [x] **Deterministic test data** — a UUID-suffixed account per test, created through the API;
+      prices and ids resolved at runtime, never hardcoded.
+- [x] **Clean teardown** — the cart is cleared per test; teardown failures are logged, never
+      allowed to fail a test that already passed.
 
 ---
 
@@ -151,7 +163,27 @@ artifact should read as if it will be adopted by a whole QA org.
       Generated from `scripts/test_case_data.py` so it stays reviewable and diffable.
 - [x] **Findings**: 15 defects in the AUT documented in `docs/findings.md` (9 pinned by automated tests),
       plus 7 framework-side flake lessons written up as standards.
-- [ ] **Push to a public GitHub repo** and put the link in the submission email. ← only remaining deliverable
+- [ ] **Push to a public GitHub repo** and put the link in the submission email.
+      **Owner: repo author** (decided 2026-09-05 — the repo will be created manually).
+      Everything else is done; the working tree is clean and all commits are ready to push.
+
+### Pushing (once the empty repo exists on GitHub)
+
+Create the repo on GitHub **without** a README, .gitignore or licence — the local
+history already has them and an initialised remote would force a merge. Then:
+
+```bash
+cd ~/Developer/learn/qa
+git remote add origin git@github.com:minhpnz/<repo-name>.git
+git push -u origin main
+```
+
+`gh` is already authenticated as `minhpnz` over SSH, so no further login is needed.
+Before sending the link, confirm the repo is set to **Public** in Settings.
+
+Nothing sensitive is tracked: `.env` is gitignored (only `.env.example` is committed,
+holding defaults and no secrets), and the suite creates its own throwaway accounts at
+runtime, so no credentials exist in the history.
 
 ### Verification status
 
