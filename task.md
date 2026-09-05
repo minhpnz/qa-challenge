@@ -193,21 +193,38 @@ way to get a trustworthy result on this machine (see the note below).
 
 | Suite                     | Result                                                                       | How                       |
 | ------------------------- | ---------------------------------------------------------------------------- | ------------------------- |
-| API (19 tests)            | ✅ 19/19 in 7.6s — also passes with **no browsers installed**, as CI runs it | host + empty browser path |
+| API (19 tests)            | ✅ 19/19 in 7.6s — also green with **no browsers installed**, as CI runs it  | host + empty browser path |
 | UI Chromium (29 tests)    | ✅ 29/29 in 1.0m                                                             | host                      |
-| UI Firefox (29 tests)     | ✅ 29/29 in 2.4m                                                             | Docker                    |
-| UI WebKit (29 tests)      | ✅ 28 passed + 1 flaky (passed on retry) in 3.2m — under triage              | Docker                    |
+| UI Firefox (29 tests)     | ✅ 29/29 in 2.4m                                                             | Docker, 2 workers         |
+| UI WebKit (29 tests)      | ✅ 29/29 in 5.9m with 1 worker; 28 + 1 flaky with 2 workers — see below      | Docker                    |
 | Performance (5 tests)     | ✅ API latency 2/2; page budgets 4/5 repeats (1 lost to an external SIGKILL) | host                      |
 | Lint + format + typecheck | ✅ `npm run verify` clean                                                    | host                      |
-| Clean clone               | ✅ all deliverables present, no stray artifacts, lockfile committed          | `git clone` to a temp dir |
+| Clean clone               | ✅ all deliverables present, lockfile committed, no stray artifacts          | `git clone` to a temp dir |
 | Workbook formulas (32)    | ✅ no unknown sheets/functions/ranges; 22 COUNTIF/COUNTA recomputed          | static validation         |
 | Workbook cross-references | ✅ every defect reachable from a case and back; no duplicate or dangling IDs | integrity script          |
 
+**WebKit flake — triaged, per the policy in the README.** With 2 workers in a 2 GB
+container the suite reports one flaky test, but **a different test each run**, and the
+wall time rises with it (3.2m → 5.1m). The cart test that flaked first passes 4/4 in
+isolation. That pattern is worker contention in a memory-starved container, not a race
+in any one test: WebKit at 2 workers peaked at 1.39 GiB of the 1.94 GiB available. At 1
+worker the suite is **29/29 clean**. GitHub runners (7 GB, 2 cores) have far more
+headroom, so the CI matrix is left at 2 workers; give Docker more memory before running
+WebKit locally with 2.
+
+Triage did surface two genuine bugs, both fixed:
+
+- `RETRIES=0` was rejected by config validation, making the documented "no retries"
+  switch unusable. Ranges are now per-knob.
+- The cart's `/viewcart` wait inherited the **action** timeout (10 s) although it is
+  part of navigation; on WebKit that call measured 9.5–13.7 s. It now uses the
+  navigation budget. This did not remove the contention flake, and is not claimed to.
+
 **Note — browser failures on this host are external, not the framework.** Playwright's
 browser processes are **SIGKILLed mid-run** by the Avira system extension
-(`com.avira.scanservice`), with `kill EPERM` in the browser log. A host cross-browser
-run gave 56 failed / 1 passed — and every single failure was a launch or process kill,
-with **zero assertion failures**. The identical suite is green in Docker. Full Chromium
+(`com.avira.scanservice`), with `kill EPERM` in the browser log. A host cross-browser run
+gave 56 failed / 1 passed — and every failure was a launch or process kill, with **zero
+assertion failures**. The identical suite is green in Docker. Full Chromium
 (`channel: 'chromium'`) will not launch on this host at all.
 
 To run cross-browser natively, add this directory and `~/Library/Caches/ms-playwright`
