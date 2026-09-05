@@ -3,9 +3,12 @@
 // image nobody can reproduce quietly goes stale and starts lying about the suite.
 // Driven by scripts/capture-report-images.sh.
 const { chromium } = require('@playwright/test');
-(async () => {
+void (async () => {
   const browser = await chromium.launch();
-  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: 2 });
+  const page = await browser.newPage({
+    viewport: { width: 1440, height: 1000 },
+    deviceScaleFactor: 2,
+  });
   await page.goto('http://127.0.0.1:9323', { waitUntil: 'networkidle' });
   await page.waitForSelector('.test-file-test', { timeout: 20000 });
   await page.screenshot({ path: '/out/report-overview.png', fullPage: true });

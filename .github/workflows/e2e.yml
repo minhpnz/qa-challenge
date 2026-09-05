@@ -103,7 +103,11 @@ jobs:
     name: Merge report
     runs-on: ubuntu-latest
     needs: [ui]
-    if: ${{ !cancelled() }}
+    # `!cancelled()` alone is not enough: when an upstream job fails, `ui` is
+    # SKIPPED and produces no blob artifacts, so this job ran anyway and died on
+    # a missing directory — a second red job that tells you nothing about the
+    # actual failure. Only merge when `ui` genuinely ran, pass or fail.
+    if: ${{ !cancelled() && (needs.ui.result == 'success' || needs.ui.result == 'failure') }}
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4

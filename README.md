@@ -4,10 +4,6 @@ A Playwright + TypeScript automation framework for [demoblaze.com](https://www.d
 covering the **Login** and **Cart/Checkout** journeys across UI, API and performance layers —
 plus the documented test case suite those journeys were derived from.
 
-Built to be adopted by a team, not to pass a demo: every structural decision below
-is written down with the alternative it was chosen over, because a framework
-nobody can reason about is a framework nobody will extend.
-
 ## Deliverables
 
 | #   | Deliverable                                                   | Where                                                                                                               |

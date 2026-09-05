@@ -11,7 +11,11 @@ export default tseslint.config(
   {
     languageOptions: {
       parserOptions: {
-        projectService: { allowDefaultProject: ['eslint.config.mjs'] },
+        // Tooling files that sit outside tsconfig's include: still linted, just
+        // without a typed project behind them.
+        projectService: {
+          allowDefaultProject: ['eslint.config.mjs', 'scripts/screenshot-report.js'],
+        },
         tsconfigRootDir: import.meta.dirname,
       },
     },
@@ -22,6 +26,13 @@ export default tseslint.config(
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       'no-console': ['warn', { allow: ['warn', 'error'] }],
     },
+  },
+  {
+    // Node tooling scripts, not framework code. They legitimately use CommonJS,
+    // so the TypeScript-flavoured import rule does not apply — everything else,
+    // including the floating-promise rule, still does.
+    files: ['scripts/**/*.js'],
+    rules: { '@typescript-eslint/no-require-imports': 'off' },
   },
   {
     files: ['tests/**/*.ts'],
