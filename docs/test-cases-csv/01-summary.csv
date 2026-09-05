@@ -4,6 +4,6 @@ Scope,Login (incl. registration dependency) and Cart / Checkout
 Total test cases,107
 Login test cases,44
 Cart test cases,63
-Automated,66
-Manual / exploratory,41
+Automated,98
+Manual / exploratory,9
 Defects raised,18

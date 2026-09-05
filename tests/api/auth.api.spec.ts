@@ -57,6 +57,98 @@ test.describe('API — auth', () => {
     expect(await response.json()).toHaveProperty('errorMessage');
   });
 
+  test('treats the password as case-sensitive @regression', async ({ api, registeredUser }) => {
+    const result = await api.login({
+      username: registeredUser.username,
+      password: registeredUser.password.toUpperCase(),
+    });
+
+    expect(result).toEqual({ ok: false, errorMessage: 'Wrong password.' });
+  });
+
+  test("rejects a valid username paired with another account's password @regression", async ({
+    api,
+    registeredUser,
+  }) => {
+    const other = createTestUser('other');
+    await api.signupOrThrow({ ...other, password: 'A-Different-Passw0rd!' });
+
+    const result = await api.login({
+      username: registeredUser.username,
+      password: 'A-Different-Passw0rd!',
+    });
+
+    expect(result).toEqual({ ok: false, errorMessage: 'Wrong password.' });
+  });
+
+  test('does not trim a whitespace-padded username @regression', async ({
+    api,
+    registeredUser,
+  }) => {
+    const result = await api.login({
+      username: `  ${registeredUser.username}  `,
+      password: registeredUser.password,
+    });
+
+    expect(result.ok).toBe(false);
+  });
+
+  test('accepts single-character credentials — no password policy @regression @bug', async ({
+    api,
+  }) => {
+    // KNOWN DEFECT (DEMO-12). There is no minimum length, complexity or breach
+    // check, so a one-character password is a valid account credential.
+    test.fail();
+    const tiny = { username: `p${Date.now().toString(36)}`, password: 'b' };
+    await api.signupOrThrow(tiny);
+
+    const result = await api.login(tiny);
+
+    expect(result.ok, 'a one-character password was accepted').toBe(false);
+  });
+
+  test('round-trips a unicode username @regression', async ({ api }) => {
+    const user = { ...createTestUser('uni'), username: `nguyễn_山田_${Date.now().toString(36)}` };
+    await api.signupOrThrow(user);
+
+    const token = await api.loginOrThrow(user);
+
+    expect(token.length).toBeGreaterThan(0);
+  });
+
+  test('accepts a password of special characters @regression', async ({ api }) => {
+    // Passwords travel base64-encoded; this is the case that would expose an
+    // encoding bug in that hop rather than in the credential itself.
+    const user = { ...createTestUser('spec'), password: '!@#$%^&*()_+{}|:"<>?' };
+    await api.signupOrThrow(user);
+
+    const token = await api.loginOrThrow(user);
+
+    expect(token.length).toBeGreaterThan(0);
+  });
+
+  test('applies no rate limit or lockout to repeated failures @regression @bug', async ({
+    api,
+    registeredUser,
+  }) => {
+    // KNOWN DEFECT (DEMO-11). Twenty consecutive wrong passwords are all
+    // processed and the correct one still works immediately afterwards — no
+    // delay, no CAPTCHA, no lockout. Open to credential stuffing.
+    test.fail();
+    const attempts = 20;
+    const results = [];
+    for (let i = 0; i < attempts; i += 1) {
+      results.push(await api.login({ username: registeredUser.username, password: `wrong-${i}` }));
+    }
+
+    const stillWorks = await api.login(registeredUser);
+
+    expect(
+      results.every((r) => !r.ok) && stillWorks.ok,
+      'the account was never throttled or locked after 20 failures',
+    ).toBe(false);
+  });
+
   test('rejects a login with an empty username @regression @bug', async ({ api }) => {
     // KNOWN DEFECT (DEMO-2), found by this suite: an empty username is not
     // validated, so the endpoint raises and returns an HTML 500 page instead of a

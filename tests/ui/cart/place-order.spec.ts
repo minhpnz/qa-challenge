@@ -183,6 +183,128 @@ test.describe('Place order', () => {
     expect(receipt.name).toBe(ORDER_EDGE_CASES.unicodeName);
   });
 
+  test('closing the order modal does not place an order @regression', async ({
+    api,
+    authToken,
+    cartPage,
+    purchaseConfirmation,
+  }) => {
+    const product = await api.findProductByTitle(PRODUCTS.phone.title);
+    await api.addToCart(authToken, product.id);
+
+    await cartPage.goto();
+    const orderModal = await cartPage.openOrderModal();
+    await orderModal.fill(createOrder());
+    await orderModal.closeButton.click();
+
+    await orderModal.expectClosed();
+    await expect(purchaseConfirmation.root).toBeHidden();
+    // The decisive check: the goods are still in the basket, server-side.
+    expect(await api.viewCart(authToken)).toHaveLength(1);
+  });
+
+  test('rejects an order with both required fields empty @regression', async ({
+    api,
+    authToken,
+    cartPage,
+    purchaseConfirmation,
+    dialogs,
+  }) => {
+    const product = await api.findProductByTitle(PRODUCTS.phone.title);
+    await api.addToCart(authToken, product.id);
+
+    await cartPage.goto();
+    const orderModal = await cartPage.openOrderModal();
+    await orderModal.placeOrder({ name: '', creditCard: '' });
+
+    await expect.poll(() => dialogs.last).toBe('Please fill out Name and Creditcard.');
+    await expect(purchaseConfirmation.root).toBeHidden();
+    expect(await api.viewCart(authToken)).toHaveLength(1);
+  });
+
+  test('handles a very long customer name @regression', async ({
+    api,
+    authToken,
+    cartPage,
+    purchaseConfirmation,
+  }) => {
+    const product = await api.findProductByTitle(PRODUCTS.phone.title);
+    await api.addToCart(authToken, product.id);
+
+    await cartPage.goto();
+    const orderModal = await cartPage.openOrderModal();
+    await orderModal.placeOrder(createOrder({ name: ORDER_EDGE_CASES.longName }));
+
+    // Boundary check on rendering as much as on storage: the receipt must still
+    // be a readable dialog, not a blown-out layout.
+    const receipt = await purchaseConfirmation.readReceipt();
+    expect(receipt.name).toHaveLength(ORDER_EDGE_CASES.longName.length);
+  });
+
+  test('does not execute a script payload in the customer name @regression', async ({
+    api,
+    authToken,
+    cartPage,
+    purchaseConfirmation,
+    dialogs,
+  }) => {
+    const product = await api.findProductByTitle(PRODUCTS.phone.title);
+    await api.addToCart(authToken, product.id);
+
+    await cartPage.goto();
+    const orderModal = await cartPage.openOrderModal();
+    await orderModal.placeOrder(createOrder({ name: '<img src=x onerror=alert(1)>' }));
+
+    const receipt = await purchaseConfirmation.readReceipt();
+    // Rendered as text, not as an element — and the payload's own alert never fired.
+    expect(receipt.name).toContain('<img');
+    expect(dialogs.messages, 'a script payload executed').not.toContain('1');
+  });
+
+  test('accepts a card number containing spaces and dashes @regression', async ({
+    api,
+    authToken,
+    cartPage,
+    purchaseConfirmation,
+  }) => {
+    const product = await api.findProductByTitle(PRODUCTS.phone.title);
+    await api.addToCart(authToken, product.id);
+
+    await cartPage.goto();
+    const orderModal = await cartPage.openOrderModal();
+    await orderModal.placeOrder(createOrder({ creditCard: '4111-1111 1111-1111' }));
+
+    // Pinned behaviour: no normalisation is applied, the value is echoed as typed.
+    const receipt = await purchaseConfirmation.readReceipt();
+    expect(receipt.cardNumber).toBe('4111-1111 1111-1111');
+  });
+
+  test('does not confirm an order the server never received @regression @bug', async ({
+    page,
+    api,
+    authToken,
+    cartPage,
+    purchaseConfirmation,
+  }) => {
+    // KNOWN DEFECT (DEMO-15). The receipt is rendered client-side without waiting
+    // on the request, so blocking the call changes nothing the customer sees:
+    // they are told the order succeeded when it did not.
+    test.fail();
+    const product = await api.findProductByTitle(PRODUCTS.phone.title);
+    await api.addToCart(authToken, product.id);
+
+    await cartPage.goto();
+    await page.route('https://api.demoblaze.com/deletecart', (route) => route.abort());
+
+    const orderModal = await cartPage.openOrderModal();
+    await orderModal.placeOrder(createOrder());
+
+    await expect(
+      purchaseConfirmation.root,
+      'a success receipt was shown for a request that failed',
+    ).toBeHidden();
+  });
+
   test('receipt shows the correct calendar month @bug', async ({
     api,
     authToken,

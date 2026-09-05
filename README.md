@@ -36,9 +36,26 @@ self-evident. Regenerate with `npm run report:images`._
 - **Traceability** — automated yes/no, the **exact spec and test title** that runs
   it, and the defect id where one applies.
 
-62 of the 103 have an executable check; the other 41 are deliberately manual
-(browser chrome such as Escape and browser Back, network-fault injection, and
-security probes that need a controlled environment).
+**98 of the 107 have an executable check — 92%.** P0 coverage is **100%**, P1 is
+90%, P2 is 89%.
+
+An earlier version of this README claimed the unautomated cases were manual by
+necessity — "browser chrome, network-fault injection, security probes". That was
+wrong, and worth correcting rather than quietly fixing: Playwright drives the
+keyboard, opens independent browser contexts, clears cookies and intercepts
+requests with `page.route()`. Those cases were unautomated because I had
+automated the highest-value ones first and stopped, which is a triage decision,
+not a constraint. Naming it as a constraint would have hidden a gap behind a
+plausible excuse.
+
+The nine that remain manual are genuinely awkward rather than merely unfinished:
+
+| Case                                        | Why it stays manual                                                                                                                  |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| CRT-053                                     | A token cannot be forced to expire from outside the service                                                                          |
+| CRT-058, CRT-059                            | Need a phantom cart line _and_ a judgement on what "degrades gracefully" should look like — the expected behaviour is not yet agreed |
+| CRT-046                                     | Double-click racing is timing-dependent; an automated version would assert a race it cannot reliably provoke                         |
+| CRT-045, LGN-007, LGN-016, LGN-020, CRT-040 | Low-risk P2 confirmations, cheap to check by hand and low value to maintain                                                          |
 
 Coverage against the three categories the brief names, per module:
 

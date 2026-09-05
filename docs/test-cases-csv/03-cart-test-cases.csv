@@ -17,7 +17,7 @@ CRT-005,Cart,Add to cart,The same product can be added twice,Edge case,P1,User i
 2. Open the Cart page",product: Samsung galaxy s6 x2,Two separate lines are shown (there is no quantity column) and the total is double the unit price,,Not Run,,,,Yes,tests/ui/cart/add-to-cart.spec.ts › allows the same product to be added twice as two lines,—
 CRT-006,Cart,Add to cart,Products from every category can be added,Functional,P1,User is logged in,"1. Filter by Phones and add a product
 2. Filter by Laptops and add a product
-3. Filter by Monitors and add a product",one product per category,All three are added successfully; category filtering does not affect the add-to-cart flow,,Not Run,,,,No,—,—
+3. Filter by Monitors and add a product",one product per category,All three are added successfully; category filtering does not affect the add-to-cart flow,,Not Run,,,,Yes,tests/ui/cart/add-to-cart.spec.ts › a product from every category can be added,—
 CRT-007,Cart,Add to cart,Confirmation wording differs when logged out,Edge case,P2,User is logged out,"1. Open a product page while logged out
 2. Click 'Add to cart'",product: Samsung galaxy s6,"The alert reads 'Product added' with no full stop, unlike the logged-in path's 'Product added.'. Inconsistent copy from two code paths — DEMO-9",,Not Run,,,,Yes,tests/ui/cart/add-to-cart.spec.ts › does not carry an anonymous cart into the session after login,DEMO-9
 CRT-008,Cart,Add to cart,An anonymous cart is not merged on login,Edge case,P1,User is logged out,"1. Add a product while logged out
@@ -25,7 +25,7 @@ CRT-008,Cart,Add to cart,An anonymous cart is not merged on login,Edge case,P1,U
 3. Open the Cart page",product: Samsung galaxy s6,The cart is empty — items added anonymously are silently discarded rather than merged into the account. Raised as DEMO-6,,Not Run,,,,Yes,tests/ui/cart/add-to-cart.spec.ts › does not carry an anonymous cart into the session after login,DEMO-6
 CRT-009,Cart,Add to cart,Add to cart remains usable after a successful add,Functional,P2,User is logged in on a product page,"1. Add the product
 2. Dismiss the alert
-3. Observe the button",-,The 'Add to cart' link stays enabled and the page does not navigate away,,Not Run,,,,No,—,—
+3. Observe the button",-,The 'Add to cart' link stays enabled and the page does not navigate away,,Not Run,,,,Yes,tests/ui/cart/add-to-cart.spec.ts › the add-to-cart control stays usable after a successful add,—
 CRT-010,Cart,Catalogue,Product page price matches the catalogue listing,Functional,P1,-,"1. Note the price on a catalogue card
 2. Open that product's page",product: Samsung galaxy s6,Both views show the same price — no disagreement between the list and detail sources,,Not Run,,,,Yes,tests/api/catalog.api.spec.ts › single-product view agrees with the list view,—
 CRT-011,Cart,Cart view,A new account starts with an empty cart,Functional,P1,"A newly registered account, logged in","1. Register a new account
@@ -43,7 +43,7 @@ CRT-016,Cart,Persistence,Cart survives a page reload,Functional,P1,Cart contains
 CRT-017,Cart,Persistence,Cart survives logging out and back in,Functional,P1,Cart contains a product and the user is logged in,"1. Add a product
 2. Log out
 3. Log back in with the same account
-4. Open the Cart page",product: Samsung galaxy s6,The cart still contains the product; it is bound to the account rather than the session,,Not Run,,,,No,—,—
+4. Open the Cart page",product: Samsung galaxy s6,The cart still contains the product; it is bound to the account rather than the session,,Not Run,,,,Yes,tests/ui/cart/add-to-cart.spec.ts › cart survives logging out and back in,—
 CRT-018,Cart,Isolation,Carts are isolated between accounts,Security,P0,Two registered accounts exist,"1. Log in as user A and add a product
 2. Log in as user B in a clean session
 3. Open the Cart page","user A: 1 product
@@ -52,7 +52,7 @@ CRT-019,Cart,Cart view,Cart contents match the API's view of the cart,Functional
 2. Open the Cart page
 3. Call POST /viewcart with the same token",-,The rendered lines and the API response describe the same set of items — the UI does not hide or invent lines,,Not Run,,,,Yes,tests/api/cart.api.spec.ts › adds an item and reads it back,—
 CRT-020,Cart,Cart view,Each cart line renders its product image and title,UI,P2,Cart contains a product,"1. Open the Cart page
-2. Inspect the line",product: Samsung galaxy s6,The image loads (no broken image) and the title matches the product exactly,,Not Run,,,,No,—,—
+2. Inspect the line",product: Samsung galaxy s6,The image loads (no broken image) and the title matches the product exactly,,Not Run,,,,Yes,tests/ui/cart/add-to-cart.spec.ts › each cart line renders its product image,—
 CRT-021,Cart,Cart management,Deleting an item that no longer exists is harmless,Edge case,P2,User is logged in,1. Call POST /deleteitem with an id that is not in any cart,id: pw-nonexistent,The API returns success and no cart is modified — the operation is idempotent,,Not Run,,,,Yes,"tests/api/cart.api.spec.ts › deleting a non-existent line item is a no-op, not an error",—
 CRT-022,Cart,Cart management,Cart can be emptied line by line,Functional,P2,Cart contains three products,"1. Delete each line in turn
 2. Observe the total after each deletion",three products,The total decreases by the corresponding line price after each deletion and reaches zero when the cart is empty,,Not Run,,,,Yes,tests/api/cart.api.spec.ts › empties the cart,—
@@ -79,7 +79,7 @@ CRT-031,Cart,Checkout,Confirming the receipt returns the user to the catalogue,F
 CRT-032,Cart,Checkout,Closing the order modal does not place an order,Functional,P1,Cart contains a product,"1. Open the order modal
 2. Fill in the fields
 3. Click 'Close' instead of 'Purchase'
-4. Re-open the Cart page",valid details,No receipt is shown and the cart still contains the product,,Not Run,,,,No,—,—
+4. Re-open the Cart page",valid details,No receipt is shown and the cart still contains the product,,Not Run,,,,Yes,tests/ui/cart/place-order.spec.ts › closing the order modal does not place an order,—
 CRT-033,Cart,Validation,Order without a name is rejected,Negative,P0,Cart contains a product,"1. Open the order modal
 2. Leave Name empty, fill the rest
 3. Click 'Purchase'","name: (empty)
@@ -89,7 +89,7 @@ CRT-034,Cart,Validation,Order without a credit card is rejected,Negative,P0,Cart
 3. Click 'Purchase'","name: Jane Tester
 card: (empty)","'Please fill out Name and Creditcard.' is shown, no receipt appears, and the cart is untouched",,Not Run,,,,Yes,tests/ui/cart/place-order.spec.ts › rejects an order with no credit card,—
 CRT-035,Cart,Validation,Order with both required fields empty is rejected,Negative,P1,Cart contains a product,"1. Open the order modal
-2. Click 'Purchase' with an empty form",-,'Please fill out Name and Creditcard.' is shown and no order is created,,Not Run,,,,No,—,—
+2. Click 'Purchase' with an empty form",-,'Please fill out Name and Creditcard.' is shown and no order is created,,Not Run,,,,Yes,tests/ui/cart/place-order.spec.ts › rejects an order with both required fields empty,—
 CRT-036,Cart,Validation,"Country, City, Month and Year are not mandatory",Edge case,P2,Cart contains a product,"1. Fill only Name and Credit card
 2. Click 'Purchase'","name: Jane Tester
 card: 4111111111111111",The order completes. Documented behaviour: only two of the six fields are validated at all,,Not Run,,,,Yes,tests/ui/cart/place-order.spec.ts › completes an order and reports the correct receipt,—
@@ -112,10 +112,10 @@ year: 1999",The order completes — expiry values are neither range-checked nor 
 CRT-041,Cart,Internationalisation,Unicode customer name is preserved on the receipt,Edge case,P2,Cart contains a product,"1. Enter a Unicode name
 2. Complete the order",name: Nguyễn Văn Ánh 山田太郎,"The receipt shows the name exactly as entered, with no mojibake or stripped characters",,Not Run,,,,Yes,tests/ui/cart/place-order.spec.ts › preserves unicode characters in the customer name,—
 CRT-042,Cart,Boundary,Very long customer name is handled,Edge case,P2,Cart contains a product,"1. Enter a 256-character name
-2. Complete the order",name: 'A' x 256,The order completes and the receipt renders without breaking the dialog layout,,Not Run,,,,No,—,—
+2. Complete the order",name: 'A' x 256,The order completes and the receipt renders without breaking the dialog layout,,Not Run,,,,Yes,tests/ui/cart/place-order.spec.ts › handles a very long customer name,—
 CRT-043,Cart,Security,XSS payload in the name is not executed on the receipt,Security,P1,Cart contains a product,"1. Enter a script payload as the Name
 2. Complete the order
-3. Observe the receipt",name: <img src=x onerror=alert(1)>,The payload is rendered as text; no script executes and no element is injected into the receipt,,Not Run,,,,No,—,—
+3. Observe the receipt",name: <img src=x onerror=alert(1)>,The payload is rendered as text; no script executes and no element is injected into the receipt,,Not Run,,,,Yes,tests/ui/cart/place-order.spec.ts › does not execute a script payload in the customer name,—
 CRT-044,Cart,Checkout,Receipt date shows the correct calendar month,Functional,P1,Cart contains a product,"1. Place a valid order on a known date
 2. Read the Date line on the receipt",order placed 04/09/2026,Expected 'Date: 4/9/2026'. Actual '4/8/2026' — the month is one behind because the app uses a zero-indexed getMonth(). Raised as DEMO-1,,Not Run,,,,Yes,tests/ui/cart/place-order.spec.ts › receipt shows the correct calendar month @bug,DEMO-1
 CRT-045,Cart,Checkout,Checkout is possible while logged out,Edge case,P1,User is logged out with an anonymous cart,"1. Add a product while logged out
@@ -125,11 +125,11 @@ card: 4111111111111111","Documented behaviour: an anonymous purchase is accepted
 CRT-046,Cart,Checkout,Double-clicking Purchase does not create two orders,Edge case,P1,Order modal is complete,"1. Fill the order form
 2. Double-click 'Purchase' rapidly",valid details,Only one confirmation and one order id result; the cart is cleared once,,Not Run,,,,No,—,—
 CRT-047,Cart,Checkout,Card number with spaces or dashes is handled,Edge case,P2,Cart contains a product,"1. Enter a card number containing spaces and dashes
-2. Complete the order",card: 4111-1111 1111-1111,The order completes and the receipt echoes the value as entered — no normalisation is applied,,Not Run,,,,No,—,—
+2. Complete the order",card: 4111-1111 1111-1111,The order completes and the receipt echoes the value as entered — no normalisation is applied,,Not Run,,,,Yes,tests/ui/cart/place-order.spec.ts › accepts a card number containing spaces and dashes,—
 CRT-048,Cart,Resilience,Checkout when the API is unreachable,Negative,P1,Cart contains a product,"1. Block requests to api.demoblaze.com
-2. Complete and submit the order form",valid details,Expected: the customer is told the order failed. Actual: the confirmation is shown regardless because it is rendered client-side before the server responds. Raise as a finding,,Not Run,,,,No,—,DEMO-15
+2. Complete and submit the order form",valid details,Expected: the customer is told the order failed. Actual: the confirmation is shown regardless because it is rendered client-side before the server responds. Raise as a finding,,Not Run,,,,Yes,tests/ui/cart/place-order.spec.ts › does not confirm an order the server never received,DEMO-15
 CRT-049,Cart,Catalogue,Category filters return only that category,Functional,P2,-,"1. Click Phones, then Laptops, then Monitors
-2. Inspect the returned products","categories: phone, notebook, monitor","Each filter returns a non-empty set and no product from another category leaks in. Note the three category links share id='itemc' (DEMO-7), so they must be selected by role and text",,Not Run,,,,Yes,tests/api/catalog.api.spec.ts › filters by category without leaking other categories,DEMO-7
+2. Inspect the returned products","categories: phone, notebook, monitor","Runs once per category. Each filter returns a non-empty set and no product from another category leaks in. Note the three category links share id='itemc' (DEMO-7), so they must be selected by role and text",,Not Run,,,,Yes,"tests/api/catalog.api.spec.ts › filters by category ""phone"" without leaking other categories",DEMO-7
 CRT-050,Cart,Catalogue,The catalogue listing endpoint is paginated,Edge case,P2,-,"1. Call GET /entries
 2. Compare against the union of the three category queries",-,"/entries returns only the first 9 of 15 products. Any test or client that treats it as the whole catalogue will miss every monitor — documented in docs/api-contract.md. One title also carries a trailing newline (DEMO-8), so title comparisons must be trimmed",,Not Run,,,,Yes,tests/api/catalog.api.spec.ts › returns a non-empty product list,DEMO-8
 CRT-060,Cart,End-to-end,Complete purchase journey from registration to receipt,Functional,P0,No account exists; user is a first-time visitor,"1. Open the home page

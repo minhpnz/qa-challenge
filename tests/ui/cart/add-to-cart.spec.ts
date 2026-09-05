@@ -211,6 +211,84 @@ test.describe('Cart', () => {
     await cartPage.expectTotal(cheapest.price + dearest.price);
   });
 
+  test('a product from every category can be added @regression', async ({
+    api,
+    productPage,
+    cartPage,
+    dialogs,
+  }) => {
+    // One per category, so a category-specific rendering or id bug cannot hide
+    // behind the phone that every other test happens to use.
+    const titles = [PRODUCTS.phone.title, PRODUCTS.laptop.title, PRODUCTS.monitor.title];
+    for (const title of titles) {
+      const product = await api.findProductByTitle(title);
+      await productPage.gotoProduct(product.id);
+      await productPage.expectLoaded();
+      dialogs.clear();
+      await productPage.addToCart();
+      await expect.poll(() => dialogs.last).toBe('Product added.');
+    }
+
+    await cartPage.goto();
+    await expect(cartPage.rows).toHaveCount(titles.length);
+  });
+
+  test('the add-to-cart control stays usable after a successful add @regression', async ({
+    api,
+    productPage,
+    dialogs,
+  }) => {
+    const product = await api.findProductByTitle(PRODUCTS.phone.title);
+    await productPage.gotoProduct(product.id);
+    await productPage.expectLoaded();
+
+    await productPage.addToCart();
+    await expect.poll(() => dialogs.last).toBe('Product added.');
+
+    // No navigation away, no disabled control — the customer can add again.
+    await expect(productPage.addToCartButton).toBeVisible();
+    await productPage.expectLoaded();
+  });
+
+  test('each cart line renders its product image @regression', async ({
+    api,
+    authToken,
+    cartPage,
+  }) => {
+    const product = await api.findProductByTitle(PRODUCTS.phone.title);
+    await api.addToCart(authToken, product.id);
+
+    await cartPage.goto();
+    await cartPage.expectContains(product.title);
+
+    // `toBeVisible` would pass on a broken image, so the check is on the decoded
+    // pixels the browser actually got.
+    const image = cartPage.row(product.title).locator('img');
+    await expect(image).toBeVisible();
+    const width = await image.evaluate((el: HTMLImageElement) => el.naturalWidth);
+    expect(width, 'the product image failed to load').toBeGreaterThan(0);
+  });
+
+  test('cart survives logging out and back in @regression', async ({
+    api,
+    authToken,
+    cartPage,
+    navBar,
+    loginModal,
+    registeredUser,
+  }) => {
+    const product = await api.findProductByTitle(PRODUCTS.phone.title);
+    await api.addToCart(authToken, product.id);
+
+    await navBar.logout();
+    await navBar.openLogin();
+    await loginModal.login(registeredUser);
+    await navBar.expectLoggedInAs(registeredUser.username);
+
+    await cartPage.goto();
+    await cartPage.expectContains(product.title);
+  });
+
   test('shows an empty cart for a brand-new account @regression', async ({ cartPage }) => {
     await cartPage.goto();
     await cartPage.expectLoaded();

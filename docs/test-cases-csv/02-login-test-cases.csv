@@ -10,11 +10,11 @@ password: <valid password>","Modal closes, header shows 'Welcome <username>', 'L
 LGN-003,Login,Session,Session persists across page navigation,Functional,P0,User is logged in,"1. Log in on the home page
 2. Navigate to the Cart page",-,The header still shows 'Welcome <username>' on the Cart page; the session is not lost on navigation,,Not Run,,,,Yes,tests/ui/login/login.spec.ts › keeps the session across navigation,—
 LGN-004,Login,Session,Session persists after a page refresh,Functional,P1,User is logged in,"1. Log in
-2. Press F5 / reload the page",-,User remains logged in after the reload; 'Welcome <username>' is still displayed,,Not Run,,,,No,—,—
+2. Press F5 / reload the page",-,User remains logged in after the reload; 'Welcome <username>' is still displayed,,Not Run,,,,Yes,tests/ui/login/session.spec.ts › survives a page refresh,—
 LGN-005,Login,Session,Log out returns the user to the anonymous state,Functional,P0,User is logged in,1. Click 'Log out' in the header,-,"User is redirected to the home page; 'Log in' and 'Sign up' are visible, 'Log out' and the welcome label are hidden",,Not Run,,,,Yes,tests/ui/login/login.spec.ts › logs out and returns to the anonymous state,—
 LGN-006,Login,Session,Cart page shows the anonymous state after log out,Functional,P1,User was logged in and has logged out,"1. Log in
 2. Log out
-3. Navigate to the Cart page",-,The Cart page header shows 'Log in' / 'Sign up' and no welcome label,,Not Run,,,,No,—,—
+3. Navigate to the Cart page",-,The Cart page header shows 'Log in' / 'Sign up' and no welcome label,,Not Run,,,,Yes,tests/ui/login/session.spec.ts › shows the anonymous state on the cart page after logging out,—
 LGN-007,Login,Login modal,Login is available from the Cart page,Functional,P2,User is logged out,"1. Navigate to the Cart page
 2. Click 'Log in'
 3. Submit valid credentials","username: <valid user>
@@ -24,18 +24,18 @@ LGN-008,Login,Login modal,Login is available from a product page,Functional,P2,U
 3. Submit valid credentials","username: <valid user>
 password: <valid password>",Login succeeds without leaving the product page context,,Not Run,,,,Yes,tests/ui/cart/add-to-cart.spec.ts › does not carry an anonymous cart into the session after login,—
 LGN-009,Login,Login modal,Modal can be dismissed with the Close button,Functional,P2,Login modal is open,"1. Open the login modal
-2. Click 'Close'",-,"Modal closes, the user remains logged out and the page is still interactive",,Not Run,,,,No,—,—
+2. Click 'Close'",-,"Modal closes, the user remains logged out and the page is still interactive",,Not Run,,,,Yes,tests/ui/login/login.modal.spec.ts › closes via the footer Close button,—
 LGN-010,Login,Login modal,Modal can be dismissed with the X control,Functional,P2,Login modal is open,"1. Open the login modal
-2. Click the X in the modal header",-,Modal closes and the user remains logged out,,Not Run,,,,No,—,—
+2. Click the X in the modal header",-,Modal closes and the user remains logged out,,Not Run,,,,Yes,tests/ui/login/login.modal.spec.ts › closes via the header x,—
 LGN-011,Login,Login modal,Modal can be dismissed with the Escape key,Functional,P2,Login modal is open,"1. Open the login modal
-2. Press Escape",-,Modal closes and the user remains logged out,,Not Run,,,,No,—,—
+2. Press Escape",-,Modal closes and the user remains logged out,,Not Run,,,,Yes,tests/ui/login/login.modal.spec.ts › closes when Escape is pressed,—
 LGN-012,Login,Login modal,Modal can be dismissed by clicking the backdrop,Functional,P2,Login modal is open,"1. Open the login modal
-2. Click outside the modal, on the backdrop",-,Modal closes and the user remains logged out,,Not Run,,,,No,—,—
+2. Click outside the modal, on the backdrop",-,Modal closes and the user remains logged out,,Not Run,,,,Yes,tests/ui/login/login.modal.spec.ts › closes when the backdrop is clicked,—
 LGN-013,Login,Login modal,Re-opened modal does not retain the previous entry,Edge case,P1,A user has logged in and then out on the same browser,"1. Log in
 2. Log out
 3. Click 'Log in' again",-,Username and password fields are both empty — the previous account's name is not exposed to the next user of the machine,,Not Run,,,,Yes,tests/ui/login/login.spec.ts › re-opening the modal after logout starts empty,—
 LGN-014,Login,Login modal,Password input masks the entered value,Functional,P1,Login modal is open,"1. Type a password into the Password field
-2. Observe the field",password: Passw0rd!QA,Characters are masked (input type=password); the plain value is not visible on screen,,Not Run,,,,No,—,—
+2. Observe the field",password: Passw0rd!QA,Characters are masked (input type=password); the plain value is not visible on screen,,Not Run,,,,Yes,tests/ui/login/login.modal.spec.ts › masks the password as it is typed,—
 LGN-015,Login,Login modal,Failed login leaves the modal open for a retry,Functional,P1,A registered account exists,"1. Open the login modal
 2. Submit a wrong password
 3. Dismiss the alert","username: <valid user>
@@ -75,7 +75,7 @@ password: Passw0rd!QA",'Please fill out Username and Password.' is shown. Note t
 LGN-026,Login,Validation,Whitespace-only username is not treated as empty,Edge case,P2,Login modal is open,"1. Enter spaces only as the username
 2. Enter a valid password
 3. Click 'Log in'","username: '   '
-password: Passw0rd!QA","The client-side guard checks for an empty string only, so the request is sent and 'User does not exist.' is returned",,Not Run,,,,No,—,—
+password: Passw0rd!QA","The client-side guard checks for an empty string only, so the request is sent and 'User does not exist.' is returned",,Not Run,,,,Yes,tests/api/auth.api.spec.ts › does not trim a whitespace-padded username,—
 LGN-027,Login,Authentication,Username is case-sensitive,Edge case,P1,A registered lowercase account exists,"1. Enter the username in UPPERCASE
 2. Enter the correct password
 3. Click 'Log in'","username: PW_A1B2C3D4
@@ -83,7 +83,7 @@ password: <valid password>",'User does not exist.' — usernames are matched cas
 LGN-028,Login,Authentication,Password is case-sensitive,Edge case,P1,A registered account exists,"1. Enter a valid username
 2. Enter the password with inverted case
 3. Click 'Log in'","username: <valid user>
-password: pASSW0RD!qa",'Wrong password.' — passwords are matched case-sensitively,,Not Run,,,,No,—,—
+password: pASSW0RD!qa",'Wrong password.' — passwords are matched case-sensitively,,Not Run,,,,Yes,tests/api/auth.api.spec.ts › treats the password as case-sensitive,—
 LGN-029,Login,Authentication,Surrounding whitespace in the username is not trimmed,Edge case,P2,A registered account exists,"1. Enter the valid username padded with leading and trailing spaces
 2. Enter the correct password
 3. Click 'Log in'","username: '  pw_a1b2c3d4  '
@@ -91,47 +91,47 @@ password: <valid password>",'User does not exist.' — the input is not trimmed.
 LGN-030,Login,Authentication,Valid username with another account's password is rejected,Negative,P1,Two registered accounts exist,"1. Enter user A's username
 2. Enter user B's password
 3. Click 'Log in'","username: <user A>
-password: <user B password>",'Wrong password.' and no session is created for either account,,Not Run,,,,No,—,—
+password: <user B password>",'Wrong password.' and no session is created for either account,,Not Run,,,,Yes,tests/api/auth.api.spec.ts › rejects a valid username paired with another account's password,—
 LGN-031,Login,Security,Error wording reveals whether an account exists,Security,P2,One registered account exists and one username does not,"1. Attempt login with a valid username and wrong password
 2. Attempt login with a username that does not exist","case 1: <valid user> / wrong
 case 2: ghost_9f2a1c / any","The two attempts return different messages ('Wrong password.' vs 'User does not exist.'), which allows username enumeration. Raised as DEMO-5; expected behaviour is a single generic message",,Not Run,,,,Yes,tests/ui/login/login.negative.spec.ts › does not leak whether an account exists through timing or wording,DEMO-5
 LGN-032,Login,Security,Repeated failed logins are not rate-limited or locked out,Security,P1,A registered account exists,1. Submit an incorrect password 20 times in a row,"username: <valid user>
-password: wrong-<n>","All 20 attempts are processed with no lockout, delay, CAPTCHA or rate limit — the account is open to brute force. Raise as a finding",,Not Run,,,,No,—,DEMO-11
+password: wrong-<n>","All 20 attempts are processed with no lockout, delay, CAPTCHA or rate limit — the account is open to brute force. Raise as a finding",,Not Run,,,,Yes,tests/api/auth.api.spec.ts › applies no rate limit or lockout to repeated failures,DEMO-11
 LGN-033,Login,Security,SQL injection payload in the username is handled as literal text,Security,P1,Login modal is open,"1. Enter a SQL injection payload as the username
 2. Enter any password
 3. Click 'Log in'","username: ' OR '1'='1
-password: anything","Login fails with 'User does not exist.'; no authentication bypass, no server error, no SQL error surfaced",,Not Run,,,,No,—,—
+password: anything","Login fails with 'User does not exist.'; no authentication bypass, no server error, no SQL error surfaced",,Not Run,,,,Yes,tests/ui/login/login.modal.spec.ts › treats a SQL injection payload as literal text,—
 LGN-034,Login,Security,XSS payload in the username is not executed,Security,P1,Login modal is open,"1. Enter a script payload as the username
 2. Submit
 3. Observe the alert and the page","username: <script>alert(1)</script>
-password: anything",The payload is treated as text; no script executes and nothing is rendered as HTML in the error message or the welcome label,,Not Run,,,,No,—,—
+password: anything",The payload is treated as text; no script executes and nothing is rendered as HTML in the error message or the welcome label,,Not Run,,,,Yes,tests/ui/login/login.modal.spec.ts › does not execute a script payload in the username,—
 LGN-035,Login,Boundary,Very long username is handled without a crash,Edge case,P2,Login modal is open,"1. Enter a 256-character username
 2. Enter any password
 3. Click 'Log in'","username: 'A' x 256
-password: Passw0rd!QA","The request is handled gracefully — a normal 'User does not exist.' error, no 500 and no unhandled client error",,Not Run,,,,No,—,—
+password: Passw0rd!QA","The request is handled gracefully — a normal 'User does not exist.' error, no 500 and no unhandled client error",,Not Run,,,,Yes,tests/ui/login/login.modal.spec.ts › handles a very long username without breaking,—
 LGN-036,Login,Boundary,Single-character credentials are accepted for registration and login,Edge case,P2,Username is available,"1. Register with a 1-character username and 1-character password
 2. Log in with them","username: a
-password: b",Documented behaviour: there is no minimum length policy. Flag the absence of a password policy as a finding,,Not Run,,,,No,—,DEMO-12
+password: b",Documented behaviour: there is no minimum length policy. Flag the absence of a password policy as a finding,,Not Run,,,,Yes,tests/api/auth.api.spec.ts › accepts single-character credentials — no password policy,DEMO-12
 LGN-037,Login,Internationalisation,Unicode username round-trips correctly,Edge case,P2,Username is available,"1. Register with a Unicode username
 2. Log in with it
 3. Observe the welcome label","username: nguyễn_山田
-password: Passw0rd!QA",Registration and login succeed and the welcome label renders the username without mojibake,,Not Run,,,,No,—,—
+password: Passw0rd!QA",Registration and login succeed and the welcome label renders the username without mojibake,,Not Run,,,,Yes,tests/api/auth.api.spec.ts › round-trips a unicode username,—
 LGN-038,Login,Boundary,Password containing special characters works,Edge case,P2,Username is available,"1. Register with a password of special characters
-2. Log in with it","password: !@#$%^&*()_+{}|:""<>?",Registration and login both succeed — base64 encoding of the password does not corrupt the value,,Not Run,,,,No,—,—
+2. Log in with it","password: !@#$%^&*()_+{}|:""<>?",Registration and login both succeed — base64 encoding of the password does not corrupt the value,,Not Run,,,,Yes,tests/api/auth.api.spec.ts › accepts a password of special characters,—
 LGN-039,Login,Session,Clearing the session cookie logs the user out,Edge case,P2,User is logged in,"1. Log in
 2. Delete the 'tokenp_' cookie via devtools
-3. Reload the page",-,The page renders in the anonymous state; no stale authenticated UI is shown,,Not Run,,,,No,—,—
+3. Reload the page",-,The page renders in the anonymous state; no stale authenticated UI is shown,,Not Run,,,,Yes,tests/ui/login/session.spec.ts › ends when the session cookie is cleared,—
 LGN-040,Login,Session,Malformed auth token is rejected,Negative,P1,User is logged in,"1. Log in
 2. Overwrite 'tokenp_' with a malformed value
-3. Open the Cart page",tokenp_: not-a-real-token,The app reports the bad token rather than exposing another user's data; no cart contents are rendered,,Not Run,,,,No,—,—
+3. Open the Cart page",tokenp_: not-a-real-token,The app reports the bad token rather than exposing another user's data; no cart contents are rendered,,Not Run,,,,Yes,tests/ui/login/session.spec.ts › a malformed auth token does not expose cart data,—
 LGN-041,Login,Session,Browser back after logout does not restore the session,Edge case,P1,User has logged in then out,"1. Log in
 2. Log out
-3. Press the browser Back button",-,"The restored page shows the anonymous state, not a cached authenticated header",,Not Run,,,,No,—,—
+3. Press the browser Back button",-,"The restored page shows the anonymous state, not a cached authenticated header",,Not Run,,,,Yes,tests/ui/login/session.spec.ts › is not restored by the browser back button after logout,—
 LGN-042,Login,Session,The same account can be used in two browsers at once,Edge case,P2,A registered account exists,"1. Log in as the account in browser A
 2. Log in as the same account in browser B
-3. Act in both",-,Both sessions remain valid and observe the same server-side cart; neither session invalidates the other,,Not Run,,,,No,—,—
+3. Act in both",-,Both sessions remain valid and observe the same server-side cart; neither session invalidates the other,,Not Run,,,,Yes,tests/ui/login/session.spec.ts › supports the same account in two independent browser sessions,—
 LGN-043,Login,Resilience,Login failure when the API is unreachable is communicated,Negative,P1,Login modal is open,"1. Block requests to api.demoblaze.com
 2. Submit valid credentials","username: <valid user>
-password: <valid password>",Expected: the user sees an error. Actual: the request fails silently with no feedback and the modal simply stays open. Raise as a finding,,Not Run,,,,No,—,DEMO-13
+password: <valid password>",Expected: the user sees an error. Actual: the request fails silently with no feedback and the modal simply stays open. Raise as a finding,,Not Run,,,,Yes,tests/ui/login/session.spec.ts › login failure is silent when the API is unreachable,DEMO-13
 LGN-044,Login,API,Authentication failures are returned with HTTP 200,Negative,P1,-,"1. POST /login with a username that does not exist
 2. Inspect the HTTP status and body","{username: 'ghost_x', password: '<base64>'}",Status is 200 with {errorMessage: 'User does not exist.'}. Pinned so any client relying on status codes is known to be at risk,,Not Run,,,,Yes,tests/api/auth.api.spec.ts › reports authentication failures at HTTP 200,—

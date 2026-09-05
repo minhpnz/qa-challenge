@@ -7,6 +7,7 @@ export class LoginModal extends BaseComponent {
   readonly password: Locator;
   readonly submitButton: Locator;
   readonly closeButton: Locator;
+  readonly dismissButton: Locator;
 
   constructor(page: Page) {
     super(page, page.locator('#logInModal'));
@@ -14,6 +15,9 @@ export class LoginModal extends BaseComponent {
     this.password = this.root.locator('#loginpassword');
     this.submitButton = this.root.getByRole('button', { name: 'Log in', exact: true });
     this.closeButton = this.root.getByRole('button', { name: 'Close', exact: true });
+    // The header 'x'. Distinct control from the footer's Close button, and users
+    // reach for it far more often, so it deserves its own coverage.
+    this.dismissButton = this.root.locator('.modal-header button.close');
   }
 
   /**
@@ -46,6 +50,20 @@ export class LoginModal extends BaseComponent {
 
   async submit(): Promise<void> {
     await this.submitButton.click();
+  }
+
+  async pressEscape(): Promise<void> {
+    await this.root.press('Escape');
+  }
+
+  /**
+   * Bootstrap dismisses on a click landing on the modal container but outside the
+   * dialog itself. Clicking a fixed offset inside the container's top-left corner
+   * hits that region reliably, which a `.modal-backdrop` click does not — the
+   * backdrop sits behind the container and is intercepted.
+   */
+  async clickOutside(): Promise<void> {
+    await this.root.click({ position: { x: 4, y: 4 } });
   }
 
   async login(credentials: Credentials): Promise<void> {
