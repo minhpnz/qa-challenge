@@ -20,12 +20,33 @@ nobody can reason about is a framework nobody will extend.
 
 ## Test case suite
 
-94 documented cases — **44 Login**, **50 Cart/Checkout** — split across four tabs
-(Summary, Login, Cart, Defects), with per-case preconditions, numbered steps, test
-data, expected results, priority, and a **direct reference to the spec that
-automates it**. 56 of the 94 have an executable check; the other 38 are
-deliberately manual (browser chrome such as Escape and browser Back, network-fault
-injection, and security probes that need a controlled environment).
+94 documented cases — **44 Login**, **50 Cart/Checkout** — across four tabs
+(Summary, Login, Cart, Defects). 18 columns per case, in three blocks:
+
+- **Design** — id, module, feature area, title, type, priority, preconditions,
+  numbered steps, test data, expected result.
+- **Execution** — actual result, status (dropdown: Not Run / Pass / Fail /
+  Blocked / N/A), executed by, executed on, environment. Shipped **empty and
+  shaded**, ready for a manual cycle. A suite delivered with results nobody
+  produced is a fiction, so automated cases report through CI instead.
+- **Traceability** — automated yes/no, the **exact spec and test title** that runs
+  it, and the defect id where one applies.
+
+56 of the 94 have an executable check; the other 38 are deliberately manual
+(browser chrome such as Escape and browser Back, network-fault injection, and
+security probes that need a controlled environment).
+
+Coverage against the three categories the brief names, per module:
+
+| Module | Functional | Negative | Edge case | Security | UI  |
+| ------ | ---------- | -------- | --------- | -------- | --- |
+| Login  | 16         | 11       | 13        | 4        | —   |
+| Cart   | 25         | 6        | 16        | 2        | 1   |
+
+Every interactive control in both modules has at least one case — both modal
+inputs and buttons, Escape, backdrop and X dismissal, the nav links and welcome
+label, the session cookie, each cart line cell, the total, and all six order-form
+fields.
 
 Two conventions worth calling out:
 

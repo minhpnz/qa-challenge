@@ -33,10 +33,19 @@ free):
 
 ```
 =COUNTA('Login Test Cases'!A2:A45)
-=COUNTIF('Login Test Cases'!D2:D45,"Functional")
-=COUNTIF('Login Test Cases'!E2:E45,"P0")
-=COUNTIF('Login Test Cases'!J2:J45,"Yes")
+=COUNTIF('Login Test Cases'!E2:E45,"Functional")   ' E = Type
+=COUNTIF('Login Test Cases'!F2:F45,"P0")           ' F = Priority
+=COUNTIF('Login Test Cases'!P2:P45,"Yes")          ' P = Automated
 ```
+
+You will also want the dropdowns back, via **Data → Data validation**:
+
+| Column        | Values                                        |
+| ------------- | --------------------------------------------- |
+| E — Type      | Functional, Negative, Edge case, Security, UI |
+| F — Priority  | P0, P1, P2                                    |
+| L — Status    | Not Run, Pass, Fail, Blocked, N/A             |
+| P — Automated | Yes, No                                       |
 
 ## After importing
 

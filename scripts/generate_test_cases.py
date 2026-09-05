@@ -22,12 +22,18 @@ BAND = "F2F5FB"
 AMBER = "FFF2CC"
 GREY = "808080"
 
+# Design columns (what the case is) then execution columns (what happened when it
+# was run) then traceability. The execution block ships empty on purpose: this is
+# a test case suite, and a suite that arrives pre-filled with results nobody
+# produced is a fiction. A tester fills Actual Result / Status / Executed on a
+# real cycle; automated cases report through CI instead — see the Summary tab.
 HEADERS = [
-    "Test Case ID", "Feature Area", "Title", "Type", "Priority", "Preconditions",
-    "Test Steps", "Test Data", "Expected Result", "Automated",
-    "Automation Reference", "Defect ID",
+    "Test Case ID", "Module", "Feature Area", "Title", "Type", "Priority",
+    "Preconditions", "Test Steps", "Test Data", "Expected Result",
+    "Actual Result", "Status", "Executed By", "Executed On", "Environment",
+    "Automated", "Automation Reference", "Defect ID",
 ]
-WIDTHS = [14, 18, 46, 13, 9, 30, 46, 26, 58, 11, 52, 12]
+WIDTHS = [14, 10, 18, 46, 13, 9, 30, 46, 26, 58, 34, 12, 14, 14, 20, 11, 52, 12]
 
 DEFECT_HEADERS = [
     "Defect ID", "Area", "Severity", "Likelihood", "Status", "Summary",
@@ -64,16 +70,17 @@ def style_header(ws, headers, widths):
         cell.border = HEAD_BORDER
         ws.column_dimensions[get_column_letter(col)].width = width
     ws.row_dimensions[1].height = 26
-    ws.freeze_panes = "C2"
+    ws.freeze_panes = "E2"
     ws.auto_filter.ref = f"A1:{get_column_letter(len(headers))}1"
 
 
-def write_cases(ws, rows):
+def write_cases(ws, rows, module):
     style_header(ws, HEADERS, WIDTHS)
     for i, (cid, area, title, ttype, prio, pre, steps, data, expected, ref, defect) in enumerate(rows):
         r = i + 2
         automated = "No" if not ref or ref == "Manual" else "Yes"
-        values = [cid, area, title, ttype, prio, pre, steps, data, expected, automated, ref or "—", defect or "—"]
+        values = [cid, module, area, title, ttype, prio, pre, steps, data, expected,
+                  "", "Not Run", "", "", "", automated, ref or "—", defect or "—"]
         for col, value in enumerate(values, start=1):
             cell = ws.cell(row=r, column=col, value=value)
             cell.alignment = Alignment(vertical="top", wrap_text=True)
@@ -82,20 +89,25 @@ def write_cases(ws, rows):
                 cell.fill = PatternFill("solid", start_color=BAND)
         ws.cell(row=r, column=1).font = Font(bold=True)
         if prio == "P0":
-            ws.cell(row=r, column=5).font = Font(bold=True, color="C00000")
-        if automated == "Yes":
-            ws.cell(row=r, column=10).font = Font(color="1F7A1F", bold=True)
-        else:
-            ws.cell(row=r, column=10).font = Font(color=GREY)
+            ws.cell(row=r, column=6).font = Font(bold=True, color="C00000")
+        ws.cell(row=r, column=12).font = Font(color=GREY, italic=True)
+        ws.cell(row=r, column=12).alignment = Alignment(horizontal="center", vertical="top")
+        # Editable cells get a paler ground so a tester can see where to type.
+        for col in (11, 12, 13, 14, 15):
+            ws.cell(row=r, column=col).fill = PatternFill("solid", start_color="FFFDF5")
+        ws.cell(row=r, column=16).font = (
+            Font(color="1F7A1F", bold=True) if automated == "Yes" else Font(color=GREY)
+        )
         if defect:
-            ws.cell(row=r, column=12).fill = PatternFill("solid", start_color=AMBER)
+            ws.cell(row=r, column=18).fill = PatternFill("solid", start_color=AMBER)
         ws.row_dimensions[r].height = estimate_height(values, WIDTHS)
 
     last = len(rows) + 1
     for column, options in (
-        ("D", '"Functional,Negative,Edge case,Security,UI"'),
-        ("E", '"P0,P1,P2"'),
-        ("J", '"Yes,No"'),
+        ("E", '"Functional,Negative,Edge case,Security,UI"'),
+        ("F", '"P0,P1,P2"'),
+        ("L", '"Not Run,Pass,Fail,Blocked,N/A"'),
+        ("P", '"Yes,No"'),
     ):
         dv = DataValidation(type="list", formula1=options, allow_blank=False)
         ws.add_data_validation(dv)
@@ -189,11 +201,11 @@ def write_summary(ws, n_login, n_cart, n_defects):
 
     counts(8, "Total test cases", None, None, "44 Login + 50 Cart.", bold=True)
     for offset, ttype in enumerate(["Functional", "Negative", "Edge case", "Security", "UI"]):
-        counts(9 + offset, f"    {ttype}", "D", ttype, band=(offset % 2 == 0))
-    counts(14, "P0 — blocks release", "E", "P0",
+        counts(9 + offset, f"    {ttype}", "E", ttype, band=(offset % 2 == 0))
+    counts(14, "P0 — blocks release", "F", "P0",
            "Login, add to cart, checkout, cross-account cart isolation.", bold=True)
-    counts(15, "Automated", "J", "Yes", "Covered by the Playwright suite in this repository.", band=True)
-    counts(16, "Manual / exploratory", "J", "No",
+    counts(15, "Automated", "P", "Yes", "Covered by the Playwright suite in this repository.", band=True)
+    counts(16, "Manual / exploratory", "P", "No",
            "Deliberately not automated: browser chrome (Escape, backdrop, browser Back), "
            "network-fault injection, and security probes needing a controlled environment.")
 
@@ -241,6 +253,12 @@ def write_summary(ws, n_login, n_cart, n_defects):
                  "or unusual-but-valid. Security / UI as labelled."),
         ("Priority", "P0 = blocks release. P1 = important. P2 = lower risk."),
         ("Automated", "Yes = an executable check exists. No = deliberately manual, for the reasons above."),
+        ("Actual Result / Status", "Execution columns, shipped empty and shaded. A tester fills them during a "
+                                   "run; Status defaults to Not Run and is a dropdown (Pass / Fail / Blocked / N/A). "
+                                   "Automated cases report through CI instead of here — a suite delivered with "
+                                   "results nobody produced is a fiction."),
+        ("Executed By / On / Environment", "Who ran the cycle, when, and against which browser and build, so a "
+                                            "result can be reproduced rather than taken on trust."),
         ("Automation Reference", "The exact spec and test title that runs the case, so a reviewer can go "
                                  "from a row straight to running code."),
         ("Expected Result", "Where the app is defective the row states BOTH the expected and the observed "
@@ -273,19 +291,19 @@ def main():
     wb = Workbook()
     summary = wb.active
     summary.title = "Summary"
-    n_login = write_cases(wb.create_sheet("Login Test Cases"), LOGIN) - 1
-    n_cart = write_cases(wb.create_sheet("Cart Test Cases"), CART) - 1
+    n_login = write_cases(wb.create_sheet("Login Test Cases"), LOGIN, "Login") - 1
+    n_cart = write_cases(wb.create_sheet("Cart Test Cases"), CART, "Cart") - 1
     write_defects(wb.create_sheet("Defects"), DEFECTS)
     write_summary(summary, n_login, n_cart, len(DEFECTS))
     summary.sheet_view.showGridLines = False
     wb.save(OUT_XLSX)
 
-    def to_rows(cases):
+    def to_rows(cases, module):
         out = []
         for cid, area, title, ttype, prio, pre, steps, data, expected, ref, defect in cases:
             automated = "No" if not ref or ref == "Manual" else "Yes"
-            out.append([cid, area, title, ttype, prio, pre, steps, data, expected,
-                        automated, ref or "—", defect or "—"])
+            out.append([cid, module, area, title, ttype, prio, pre, steps, data, expected,
+                        "", "Not Run", "", "", "", automated, ref or "—", defect or "—"])
         return out
 
     dump_csv(os.path.join(OUT_CSV_DIR, "01-summary.csv"),
@@ -298,8 +316,8 @@ def main():
               ["Automated", sum(1 for r in LOGIN + CART if r[9] and r[9] != "Manual")],
               ["Manual / exploratory", sum(1 for r in LOGIN + CART if not r[9] or r[9] == "Manual")],
               ["Defects raised", len(DEFECTS)]])
-    dump_csv(os.path.join(OUT_CSV_DIR, "02-login-test-cases.csv"), HEADERS, to_rows(LOGIN))
-    dump_csv(os.path.join(OUT_CSV_DIR, "03-cart-test-cases.csv"), HEADERS, to_rows(CART))
+    dump_csv(os.path.join(OUT_CSV_DIR, "02-login-test-cases.csv"), HEADERS, to_rows(LOGIN, "Login"))
+    dump_csv(os.path.join(OUT_CSV_DIR, "03-cart-test-cases.csv"), HEADERS, to_rows(CART, "Cart"))
     dump_csv(os.path.join(OUT_CSV_DIR, "04-defects.csv"), DEFECT_HEADERS, [list(r) for r in DEFECTS])
 
     print(f"xlsx: {OUT_XLSX}")
