@@ -14,11 +14,11 @@ plus the documented test case suite those journeys were derived from.
 | 2   | **Automation framework + demo scripts**                       | this repository — see _Framework structure_ below                                                                   |
 | 3   | **Documentation** — structure, rationale, run steps           | this README, plus [`docs/api-contract.md`](docs/api-contract.md) and [`docs/findings.md`](docs/findings.md)         |
 
-![Playwright HTML report — 33 tests, all passing](docs/images/report-overview.png)
+![Playwright HTML report — the 58-test Chromium suite, all passing](docs/images/report-overview.png)
 
-_The Chromium suite, captured from a real run in the Playwright container.
-Tags are visible on every test, so `--grep @smoke` and the CI matrix are
-self-evident. Regenerate with `npm run report:images`._
+_The Chromium suite — 58 UI tests — captured from a real run in the Playwright
+container. Tags are visible on every test, so `--grep @smoke` and the CI matrix
+are self-evident. Regenerate with `npm run report:images`._
 
 ---
 
@@ -279,13 +279,14 @@ not. Both cross-browser runs below were verified this way.
 
 **Enforced by design:**
 
-| Rule                                                                      | Why                                                                                                                              |
-| ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Web-first assertions (`toHaveText`, `toHaveCount`) over read-then-compare | They retry until the value settles; a bare read captures whatever happened to be there                                           |
-| Every page defines `expectLoaded()` against a real DOM anchor             | The catalogue renders client-side, so `goto()` resolving proves nothing                                                          |
-| Cart navigation waits for the `/viewcart` response                        | Otherwise "cart is empty" also passes on a page that has not fetched yet — an assertion that cannot fail                         |
-| Wait on a widget's own readiness signal                                   | SweetAlert ignores clicks until it adds a `visible` class 500 ms after opening; the fix is to wait for that class, never a sleep |
-| Assert the state that implies a navigation completed                      | The app hides the login modal and immediately reloads; asserting the welcome label first removes the race                        |
+| Rule                                                                      | Why                                                                                                                                                                                                                                                                                                                                       |
+| ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Web-first assertions (`toHaveText`, `toHaveCount`) over read-then-compare | They retry until the value settles; a bare read captures whatever happened to be there                                                                                                                                                                                                                                                    |
+| Every page defines `expectLoaded()` against a real DOM anchor             | The catalogue renders client-side, so `goto()` resolving proves nothing                                                                                                                                                                                                                                                                   |
+| Cart navigation waits for the `/viewcart` response                        | Otherwise "cart is empty" also passes on a page that has not fetched yet — an assertion that cannot fail                                                                                                                                                                                                                                  |
+| Wait on a widget's own readiness signal                                   | Two separate instances: SweetAlert ignores clicks until it adds a `visible` class ~500 ms after opening, and Bootstrap's `hide()` returns early while `_isTransitioning` is set, so a Close click mid-fade is swallowed. Both are fixed by waiting on the widget's own state — the class, and focus landing on the dialog — never a sleep |
+| Never assert on state the suite does not own                              | DemoBlaze is a public sandbox: `admin`, `test`, `' OR '1'='1` and `<script>alert(1)</script>` are all already registered by other testers, so "User does not exist." is not a stable oracle. Payload tests assert the security property instead                                                                                           |
+| Assert the state that implies a navigation completed                      | The app hides the login modal and immediately reloads; asserting the welcome label first removes the race                                                                                                                                                                                                                                 |
 
 Five of the six entries above are bugs that were found and fixed **in this
 framework** while stabilising it across Chromium, Firefox and WebKit. Each one is

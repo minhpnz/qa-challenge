@@ -54,7 +54,20 @@ test.describe('Session', () => {
     expect(loggedInUser.username).not.toBe('');
     await navBar.logout();
 
-    await page.goBack();
+    // Deliberately NOT `page.goBack()`. That call waits for a navigation it can
+    // observe, and a back step served from the back-forward cache does not always
+    // surface one — so it sat until its 30s timeout and failed roughly one run in
+    // three, having never reached the assertion. Neither `'load'` nor `'commit'`
+    // fixed it, because the problem is waiting for a lifecycle event that may
+    // never fire, not which event we wait for.
+    //
+    // What this test actually cares about is the state the user is left in. So
+    // the back step is triggered in the page and scheduled on a macrotask — which
+    // lets `evaluate` return before the navigation tears down its execution
+    // context — and the web-first assertion below retries until the page settles.
+    await page.evaluate(() => {
+      window.setTimeout(() => window.history.back(), 0);
+    });
 
     // A restored bfcache page must not present a logged-in header.
     await navBar.expectLoggedOut();
