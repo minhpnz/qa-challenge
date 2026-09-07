@@ -15,7 +15,7 @@ export class SignupModal extends BaseComponent {
   }
 
   async expectOpen(): Promise<void> {
-    await expect(this.root).toBeVisible();
+    await this.expectModalReady();
     await expect(this.submitButton).toBeEnabled();
   }
 

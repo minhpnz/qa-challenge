@@ -26,14 +26,8 @@ export class LoginModal extends BaseComponent {
    * without a sleep.
    */
   async expectOpen(): Promise<void> {
-    await expect(this.root).toBeVisible();
+    await this.expectModalReady();
     await expect(this.submitButton).toBeEnabled();
-    // Bootstrap moves focus onto the dialog when the fade finishes, and only then
-    // is its own keydown handler live. Pressing Escape before that point is
-    // silently dropped — which looked like "Escape does not close the modal" and
-    // is really a test racing the transition. Focus is the widget's own readiness
-    // signal, so waiting on it is deterministic where a fixed sleep is not.
-    await expect(this.root).toBeFocused();
   }
 
   /**
