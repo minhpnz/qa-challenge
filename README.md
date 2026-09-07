@@ -387,26 +387,9 @@ Playwright produces numbers nobody should trust. The boundary is deliberate.
 
 ---
 
-## AI-assisted workflow
-
-How AI is actually used on this codebase, and where it is not trusted:
-
-| Stage           | Use                                                                                                            | Guardrail                                                                                                                                            |
-| --------------- | -------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Exploration** | Derive the real API contract and the app's client JS behaviour before writing a line of test code              | Every claim verified against the live service — `docs/api-contract.md` is observed, not assumed                                                      |
-| **Generation**  | Draft page objects and edge-case matrices from the app's own markup and JS                                     | Generated code is reviewed against the layering rule; nothing merges that a human would not have written                                             |
-| **Triage**      | Failure context (`error-context.md`, traces, DOM snapshots) is machine-readable and used to isolate root cause | A fix is only accepted once the _mechanism_ is understood — see the SweetAlert `visible` class finding, which a naive assistant "fixes" with a sleep |
-| **Maintenance** | Selector and assertion updates proposed from diffs                                                             | Locator strategy is policy: role/text over ids the app duplicates                                                                                    |
-
-The standard the team is held to: **AI accelerates understanding; it does not
-replace it.** Every generated wait must name the signal it waits for. "It passes
-now" is not a review comment.
-
----
-
 ## What this suite found
 
-**15 defects** in the application under test — 9 pinned by an executable check, the
+**18 defects** in the application under test — 13 pinned by an executable check, the
 rest by documented manual cases. The ones that would matter in production:
 
 |             |                                                                                                                             |
