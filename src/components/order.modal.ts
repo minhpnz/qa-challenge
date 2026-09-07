@@ -31,7 +31,7 @@ export class OrderModal extends BaseComponent {
     this.month = this.root.locator('#month');
     this.year = this.root.locator('#year');
     this.purchaseButton = this.root.getByRole('button', { name: 'Purchase', exact: true });
-    this.closeButton = this.root.getByRole('button', { name: 'Close', exact: true });
+    this.closeButton = this.footerButton('Close');
   }
 
   async expectOpen(): Promise<void> {

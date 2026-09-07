@@ -85,8 +85,18 @@ test.describe('Core purchase journey', () => {
       await cartPage.expectEmpty();
       // Checked at the source as well: the UI could render an empty table over a
       // cart the server still holds, and the next login would resurrect it.
+      //
+      // Polled rather than read once. The app fires the cart-clearing request and
+      // shows the receipt without waiting for it (DEMO-15), so the server is only
+      // eventually consistent with what the customer has been told. A single read
+      // races that gap; converging on empty is the real contract, and if it never
+      // converges this still fails.
       const token = await api.loginOrThrow(user);
-      expect(await api.viewCart(token)).toHaveLength(0);
+      await expect
+        .poll(async () => (await api.viewCart(token)).length, {
+          message: 'the server-side cart was never cleared after the order',
+        })
+        .toBe(0);
     });
   });
 });

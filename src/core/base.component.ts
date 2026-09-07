@@ -18,4 +18,21 @@ export abstract class BaseComponent {
   async isVisible(): Promise<boolean> {
     return this.root.isVisible();
   }
+
+  /**
+   * Every Bootstrap modal in this app carries TWO controls whose accessible name
+   * is "Close": the footer button and the header's ×, which has
+   * `aria-label="Close"`. An unscoped `getByRole('button', { name: 'Close' })` is
+   * therefore a strict-mode violation in every one of them.
+   *
+   * These helpers exist so that is a solved problem rather than a trap each new
+   * modal falls into: scope by region, and a by-name lookup stays unambiguous.
+   */
+  protected footerButton(name: string): Locator {
+    return this.root.locator('.modal-footer').getByRole('button', { name, exact: true });
+  }
+
+  protected headerDismissButton(): Locator {
+    return this.root.locator('.modal-header button.close');
+  }
 }

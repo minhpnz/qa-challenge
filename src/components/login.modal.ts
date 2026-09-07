@@ -14,14 +14,10 @@ export class LoginModal extends BaseComponent {
     this.username = this.root.locator('#loginusername');
     this.password = this.root.locator('#loginpassword');
     this.submitButton = this.root.getByRole('button', { name: 'Log in', exact: true });
-    // Scoped to the footer: the header's 'x' carries aria-label="Close" too, so an
-    // unscoped by-name lookup matches two elements and fails strict mode.
-    this.closeButton = this.root
-      .locator('.modal-footer')
-      .getByRole('button', { name: 'Close', exact: true });
-    // The header 'x'. Distinct control from the footer's Close button, and users
-    // reach for it far more often, so it deserves its own coverage.
-    this.dismissButton = this.root.locator('.modal-header button.close');
+    this.closeButton = this.footerButton('Close');
+    // The header '×'. A distinct control from the footer's Close button, and the
+    // one users reach for more often, so it earns its own coverage.
+    this.dismissButton = this.headerDismissButton();
   }
 
   /**
