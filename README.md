@@ -348,13 +348,20 @@ so a failure can be reproduced against the exact data that produced it._
 [`.github/workflows/e2e.yml`](.github/workflows/e2e.yml). The pipeline shape
 mirrors the cost of each signal:
 
-| Job           | Runs on          | Duration | Why there                                                                                                                   |
-| ------------- | ---------------- | -------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `verify`      | every push/PR    | seconds  | Format, lint, types. Nothing else runs if this fails                                                                        |
-| `api`         | every push/PR    | ~1 min   | No browser download, no browser launch — cheap enough to gate everything                                                    |
-| `ui`          | every push/PR    | minutes  | 3 browsers × 2 shards in parallel; blob reports merged afterwards                                                           |
-| `report`      | after `ui`       | ~1 min   | Merges shards into one HTML report artifact                                                                                 |
-| `performance` | nightly + manual | ~5 min   | Timing assertions on a contended PR runner measure the runner, not the app — so they run on a schedule with relaxed budgets |
+| Job           | Runs on                         | Duration | Why there                                                                                                         |
+| ------------- | ------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------- |
+| `verify`      | every push/PR                   | seconds  | Format, lint, types. Nothing else runs if this fails                                                              |
+| `api`         | every push/PR                   | ~1 min   | No browser download, no browser launch — cheap enough to gate everything                                          |
+| `ui`          | every push/PR                   | minutes  | 3 browsers × 2 shards in parallel; blob reports merged afterwards                                                 |
+| `report`      | after `ui`                      | ~1 min   | Merges shards into one HTML report artifact                                                                       |
+| `performance` | on demand (`workflow_dispatch`) | ~5 min   | Timing assertions on a contended PR runner measure the runner, not the app, so they are never part of the PR gate |
+
+**Why there is no nightly cron.** A scheduled run against a third-party public
+demo site fails whenever that site is down, and the status badge shows the most
+recent run — so an outage nobody caused would paint this repository red. A green
+badge has to mean "the last change was good" or it means nothing, so the
+performance job is triggered manually instead. In a codebase whose environment we
+controlled, a nightly run would earn its place.
 
 Portable by construction: it is `npx playwright test` plus environment variables.
 The same commands run unchanged under Jenkins, GitLab CI or locally.

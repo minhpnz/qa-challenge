@@ -14,7 +14,11 @@ export class LoginModal extends BaseComponent {
     this.username = this.root.locator('#loginusername');
     this.password = this.root.locator('#loginpassword');
     this.submitButton = this.root.getByRole('button', { name: 'Log in', exact: true });
-    this.closeButton = this.root.getByRole('button', { name: 'Close', exact: true });
+    // Scoped to the footer: the header's 'x' carries aria-label="Close" too, so an
+    // unscoped by-name lookup matches two elements and fails strict mode.
+    this.closeButton = this.root
+      .locator('.modal-footer')
+      .getByRole('button', { name: 'Close', exact: true });
     // The header 'x'. Distinct control from the footer's Close button, and users
     // reach for it far more often, so it deserves its own coverage.
     this.dismissButton = this.root.locator('.modal-header button.close');
@@ -28,6 +32,12 @@ export class LoginModal extends BaseComponent {
   async expectOpen(): Promise<void> {
     await expect(this.root).toBeVisible();
     await expect(this.submitButton).toBeEnabled();
+    // Bootstrap moves focus onto the dialog when the fade finishes, and only then
+    // is its own keydown handler live. Pressing Escape before that point is
+    // silently dropped — which looked like "Escape does not close the modal" and
+    // is really a test racing the transition. Focus is the widget's own readiness
+    // signal, so waiting on it is deterministic where a fixed sleep is not.
+    await expect(this.root).toBeFocused();
   }
 
   /**
@@ -57,13 +67,19 @@ export class LoginModal extends BaseComponent {
   }
 
   /**
-   * Bootstrap dismisses on a click landing on the modal container but outside the
-   * dialog itself. Clicking a fixed offset inside the container's top-left corner
-   * hits that region reliably, which a `.modal-backdrop` click does not — the
-   * backdrop sits behind the container and is intercepted.
+   * Bootstrap dismisses only when the click target is the modal container itself,
+   * never the dialog inside it. The point is computed from the dialog's own box —
+   * halfway up, in the gutter to its left — so it stays correct on any viewport,
+   * including the mobile projects where a hardcoded corner would land differently.
+   *
+   * A raw mouse click, not `locator.click({ position })`: the latter runs
+   * actionability checks against the container, which spans the viewport and is
+   * considered obscured by the dialog it contains.
    */
   async clickOutside(): Promise<void> {
-    await this.root.click({ position: { x: 4, y: 4 } });
+    const box = await this.root.locator('.modal-dialog').boundingBox();
+    if (!box) throw new Error('Login dialog has no bounding box — is the modal open?');
+    await this.page.mouse.click(Math.max(2, box.x / 2), box.y + box.height / 2);
   }
 
   async login(credentials: Credentials): Promise<void> {

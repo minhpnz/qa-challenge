@@ -100,15 +100,15 @@ password: wrong-<n>","All 20 attempts are processed with no lockout, delay, CAPT
 LGN-033,Login,Security,SQL injection payload in the username is handled as literal text,Security,P1,Login modal is open,"1. Enter a SQL injection payload as the username
 2. Enter any password
 3. Click 'Log in'","username: ' OR '1'='1
-password: anything","Login fails with 'User does not exist.'; no authentication bypass, no server error, no SQL error surfaced",,Not Run,,,,Yes,tests/ui/login/login.modal.spec.ts › treats a SQL injection payload as literal text,—
+password: anything","The attempt is rejected and no session is created; no authentication bypass, no server error, no SQL error text surfaced. Note the rejection wording is not asserted: DemoBlaze is a public sandbox and this username is already registered by another tester, so the message depends on state the suite does not own",,Not Run,,,,Yes,tests/ui/login/login.modal.spec.ts › treats a SQL injection payload as literal text,—
 LGN-034,Login,Security,XSS payload in the username is not executed,Security,P1,Login modal is open,"1. Enter a script payload as the username
 2. Submit
 3. Observe the alert and the page","username: <script>alert(1)</script>
-password: anything",The payload is treated as text; no script executes and nothing is rendered as HTML in the error message or the welcome label,,Not Run,,,,Yes,tests/ui/login/login.modal.spec.ts › does not execute a script payload in the username,—
+password: anything",The payload is treated as text; no script executes (its own alert never fires) and nothing is rendered as HTML in the error message or the welcome label. The rejection wording is not asserted — this username is already registered on the shared sandbox,,Not Run,,,,Yes,tests/ui/login/login.modal.spec.ts › does not execute a script payload in the username,—
 LGN-035,Login,Boundary,Very long username is handled without a crash,Edge case,P2,Login modal is open,"1. Enter a 256-character username
 2. Enter any password
 3. Click 'Log in'","username: 'A' x 256
-password: Passw0rd!QA","The request is handled gracefully — a normal 'User does not exist.' error, no 500 and no unhandled client error",,Not Run,,,,Yes,tests/ui/login/login.modal.spec.ts › handles a very long username without breaking,—
+password: Passw0rd!QA","The request is handled gracefully — a normal rejection, no 500 and no unhandled client error. The rejection wording is not asserted, since this username already exists on the shared sandbox",,Not Run,,,,Yes,tests/ui/login/login.modal.spec.ts › handles a very long username without breaking,—
 LGN-036,Login,Boundary,Single-character credentials are accepted for registration and login,Edge case,P2,Username is available,"1. Register with a 1-character username and 1-character password
 2. Log in with them","username: a
 password: b",Documented behaviour: there is no minimum length policy. Flag the absence of a password policy as a finding,,Not Run,,,,Yes,tests/api/auth.api.spec.ts › accepts single-character credentials — no password policy,DEMO-12
